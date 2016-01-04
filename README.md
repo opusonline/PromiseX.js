@@ -5,7 +5,7 @@ Javascript Promise Xtended - Wrapper to add new methods [w/o changing the native
 
 # Features
 
- * built-in defer
+ * built-in defer if needed
  * assignable context for all functions
  * public string constants for better readability
  * accessible value and status of each promise
@@ -22,10 +22,10 @@ Javascript Promise Xtended - Wrapper to add new methods [w/o changing the native
 
 ### new PromiseX([executor], [context])
 
-Constructor\
-executor should be the execution function called with optional context,\
-if executor is empty the promise is a deferred with resolve and reject functions,\
-if executor is a native promise the new object will be a wrapper for this promise\
+Constructor  
+executor should be the execution function called with optional context,  
+if executor is empty the promise is a deferred with resolve and reject functions,  
+if executor is a native promise the new object will be a wrapper for this promise  
 every other executor is treated as PromiseX.resolve(value)
 
 ### Constants
@@ -36,52 +36,52 @@ every other executor is treated as PromiseX.resolve(value)
 
 ### PromiseX#then(resolve, [reject], [context])
 
-Just like standard Promise.then, always returns a new Promise\
-resolve function is executed if previous Promise is resolved\
-reject function is executed if previous Promise is rejected\
+Just like standard Promise.then, always returns a new Promise  
+resolve function is executed if previous Promise is resolved  
+reject function is executed if previous Promise is rejected  
 resolve/reject functions are called with optional context
 
 ### PromiseX#catch(reject, [context])
 
-Just like standard Promise.catch, always returns a new Promise\
-reject function is executed if previous Promise is rejected\
-shorthand for Promise.then(null, reject)\
+Just like standard Promise.catch, always returns a new Promise  
+reject function is executed if previous Promise is rejected  
+shorthand for Promise.then(null, reject)  
 reject function is called with optional context
 
 ### PromiseX#finally(callback, [context])
 
-non-standard, always returns a new Promise\
-defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>\
-callback is executed with optional context when Promise is fulfilled\
-previous resolved/rejected values are propagated to next Promise\
-_addition_: callback provides previous promise as parameter (use promise.value and promise.status)\
-_heads-up_: errors within callback will propagate as rejected promise\
+non-standard, always returns a new Promise  
+defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>  
+callback is executed with optional context when Promise is fulfilled  
+previous resolved/rejected values are propagated to next Promise  
+_addition_: callback provides previous promise as parameter (use promise.value and promise.status)  
+_heads-up_: errors within callback will propagate as rejected promise  
 
 ### PromiseX#done([resolve], [reject], [context])
 
-non-standard\
-does *not* return a promise, throws outside promises on next tick\
-defined here: <https://www.promisejs.org/api/#Promise_prototype_done>\
+non-standard  
+does *not* return a promise, throws outside promises on next tick  
+defined here: <https://www.promisejs.org/api/#Promise_prototype_done>  
 if resolve/reject is/are provided, a last Promise.then is executed with optional context
 
 ### PromiseX#nodeify(callback, [context])
 
-non-standard\
-transforms Promise to node-like callback - meaning: callback(error, value)\
+non-standard  
+transforms Promise to node-like callback - meaning: callback(error, value)  
 defined here: <https://www.promisejs.org/api/#Promise_prototype_nodify>
 
 ### PromiseX#timeout(ms, [reason])
 
-non-standard\
-used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/timeout.html)\
-timeout for previous Promise fulfillment\
+non-standard  
+used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/timeout.html)  
+timeout for previous Promise fulfillment  
 if reason is given, timeout Promise rejects with reason
 
 ### PromiseX#delay(ms, [value])
 
-non-standard\
-used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/promise.delay.html)\
-delays execution of next Promise in chain\
+non-standard  
+used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/promise.delay.html)  
+delays execution of next Promise in chain  
 if init value is given, this Promise resolves with init value otherwise previous value is propagated
 
 ### PromiseX.resolve(value)
@@ -94,55 +94,55 @@ standard, returns a rejected Promise with given reason
 
 ### PromiseX.delay(ms, [value])
 
-non-standard\
+non-standard  
 returns a resolved Promise with given value after certain amount of time in milliseconds
 
 ### PromiseX.defer
 
-non-standard\
-returns a deferred object including promise and\
+non-standard  
+returns a deferred object including promise and  
 resolve and reject methods to fulfill the promise
 <https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred>
 
 ### PromiseX.cast(value)
 
-ensures to return a promise\
-if value is a promise, return that promise\
+ensures to return a promise  
+if value is a promise, return that promise  
 <http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony>
 
 ### PromiseX.all(promises)
 
-standard\
+standard  
 returns a Promise that is resolved only if all promises are resolved
-or rejected if any promise of list is rejected\
+or rejected if any promise of list is rejected  
 resolve function gets array of promise values
 
 ### PromiseX.race(promises)
 
-standard\
+standard  
 returns a Promise that is resolved as soon as one promise is resolved
-or rejected as soon as one promise of list is rejected\
+or rejected as soon as one promise of list is rejected  
 _heads-up_: native function is commented since some checks are missing
 
 ### PromiseX.every(promises)
 
-non-standard\
-is fulfilled only if all promises are fulfilled either resolved or rejected.\
+non-standard  
+is fulfilled only if all promises are fulfilled either resolved or rejected.  
 each promise's fulfillment state and value is provided in the propagated value array
 as promise.value and promise.status
 
 ### PromiseX.any(promises)
 
-non-standard\
+non-standard  
 is fulfilled as soon as any promise is resolved or all promises are rejected
 
 ### PromiseX.map(values, mapFunction, [context])
 
-non-standard\
+non-standard  
 returns an array of PromiseX created from each value by the map function executed with optional context
 
 ### PromiseX.config(option, value)
 
-non-standard\
-influence behaviour of PromiseX plugin\
+non-standard  
+influence behaviour of PromiseX plugin  
 'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise
