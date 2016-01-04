@@ -1,157 +1,148 @@
-EventEmitter.js
-===============
+PromiseX.js
+===========
 
-Javascript EventEmitter. The best you'll get ^^
+Javascript Promise Xtended - Wrapper to add new methods [w/o changing the native promise prototype](https://www.nczonline.net/blog/2010/03/02/maintainable-javascript-dont-modify-objects-you-down-own/)
 
-This library supports:
-* on: multiple events, event namespaces, multiple listeners, listeners with context
-* off: all, multiple events, event namespaces, multiple listeners, listeners with context
-* emit: multiple events, event namespaces
-* listeners: multiple events, namespaces, all at once
-* newListener/removeListener events
-* chainable
-* includes inherit method and noConflict
-* amd and node support
+# Features
 
-#Support
+ * built-in defer
+ * assignable context for all functions
+ * public string constants for better readability
+ * accessible value and status of each promise
+ * nice methods like finally, timeout, any or nodeify
+ * change underlying promise at runtime - that way you don't need to redefine global promise
 
-Minimum IE 9, Chrome 5, Firefox 4, Opera 10.5, Safari 5, Mobile browsers, Node
 
-For older browser support, a `compatible` version is added.
+# Install
 
-#Install
+ * Install with [Bower](http://bower.io): `bower install opusonline-promisex.js`
+ * Install with [NPM](https://www.npmjs.org/): `npm install opusonline-promisex.js`
 
-* Install with [Bower](http://bower.io): `bower install opusonline-eventemitter.js`
-* Install with [NPM](https://www.npmjs.org/): `npm install opusonline-eventemitter.js`
+# Usage
 
-#Usage
+### new PromiseX([executor], [context])
 
-###Example
+Constructor\
+executor should be the execution function called with optional context,\
+if executor is empty the promise is a deferred with resolve and reject functions,\
+if executor is a native promise the new object will be a wrapper for this promise\
+every other executor is treated as PromiseX.resolve(value)
 
-```javascript
-function Foo() {
-	EventEmitter.call(this);
-}
+### Constants
 
-EventEmitter.inherits(Foo);
-// in node you could also use require('util').inherits(Foo, EventEmitter);
+ * PromiseX.PENDING
+ * PromiseX.RESOLVED
+ * PromiseX.REJECTED
 
-Foo.prototype.bar = function() {
-	this.emit('bar');
-};
+### PromiseX#then(resolve, [reject], [context])
 
-var foo = new Foo();
-foo.on('bar', function() {
-	console.log('Yeah, it works!');
-});
-foo.bar();
-```
+Just like standard Promise.then, always returns a new Promise\
+resolve function is executed if previous Promise is resolved\
+reject function is executed if previous Promise is rejected\
+resolve/reject functions are called with optional context
 
-Some Highlights:
+### PromiseX#catch(reject, [context])
 
-```javascript
-var ee = EventEmitter.noConflict(); // no conflict to other EventEmitter implementations
+Just like standard Promise.catch, always returns a new Promise\
+reject function is executed if previous Promise is rejected\
+shorthand for Promise.then(null, reject)\
+reject function is called with optional context
 
-foo.on(['foo', 'bar'], listener1, [listener2, myContext]); // multiple events, multiple listener, listeners context
+### PromiseX#finally(callback, [context])
 
-foo
-	.on('newListener', function(event, ee) { // newListener event
-		console.log(ee.listener);
-	})
-	.on('foo.bar', something); // chaining, namespaces
+non-standard, always returns a new Promise\
+defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>\
+callback is executed with optional context when Promise is fulfilled\
+previous resolved/rejected values are propagated to next Promise\
+_addition_: callback provides previous promise as parameter (use promise.value and promise.status)\
+_heads-up_: errors within callback will propagate as rejected promise\
 
-foo.emit(['foo', 'pow'], arg1, arg2); // emit multiple events at once
+### PromiseX#done([resolve], [reject], [context])
 
-foo.off('.bar'); // namespaces
-```
-##Methods
+non-standard\
+does *not* return a promise, throws outside promises on next tick\
+defined here: <https://www.promisejs.org/api/#Promise_prototype_done>\
+if resolve/reject is/are provided, a last Promise.then is executed with optional context
 
-###noConflict
+### PromiseX#nodeify(callback, [context])
 
-```javascript
-var ee = EventEmitter.noConflict();
-```
+non-standard\
+transforms Promise to node-like callback - meaning: callback(error, value)\
+defined here: <https://www.promisejs.org/api/#Promise_prototype_nodify>
 
-###inherits
+### PromiseX#timeout(ms, [reason])
 
-Build in `inherits` method. In node you can use util.inherits(ctor, EventEmitter) instead or the build in method.
+non-standard\
+used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/timeout.html)\
+timeout for previous Promise fulfillment\
+if reason is given, timeout Promise rejects with reason
 
-```javascript
-function Foo() {
-	EventEmitter.call(this);
-}
-EventEmitter.inherits(Foo);
-```
+### PromiseX#delay(ms, [value])
 
-###on (alias: addListener)
+non-standard\
+used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/promise.delay.html)\
+delays execution of next Promise in chain\
+if init value is given, this Promise resolves with init value otherwise previous value is propagated
 
-```javascript
-var ee = new EventEmitter();
-ee.on('go', go); // normal
-ee.on(['go', 'foo'], go); // multiple events
-ee.on(['go', 'foo'], go, foo); // multiple events, multiple listeners
-ee.on('go.now', go); // namespace
-ee.on('go.now', go, goFurther); // namespace, multiple listeners
-ee.on(['go.now', 'foo'], go, goFurther); // multiple events including namespace, multiple listeners
-ee.on('go', [go, person]); // listeners context
-ee.on('go', go.bind(person)); // listeners context in native way
-```
+### PromiseX.resolve(value)
 
-###once
+standard, returns a resolved Promise with given value
 
-Includes all possible parameters like `on`. The event `removeListener` is called *after* execution.
+### PromiseX.reject(reason)
 
-```javascript
-var ee = new EventEmitter();
-ee.once('go', go);
-```
+standard, returns a rejected Promise with given reason
 
-###off (alias: removeListener, removeAllListeners)
+### PromiseX.delay(ms, [value])
 
-```javascript
-var ee = new EventEmitter();
-ee.off(); // same as ee.removeAllListeners();
-ee.off('go'); // same as ee.removeAllListeners('go');
-ee.off('go', go); // same as ee.removeListener('go', go);
-ee.off(['go', 'foo'], go); // same listener on multiple events
-ee.off('go', go, foo); // multiple listeners
-ee.off('go.now', go); // namespace
-ee.off('.now', go); // namespace and listener
-ee.off('.now'); // all listener from event namespace
-ee.off('go', [go, person]); // remove listener with according context
-```
+non-standard\
+returns a resolved Promise with given value after certain amount of time in milliseconds
 
-###emit
+### PromiseX.defer
 
-```javascript
-var ee = new EventEmitter();
-ee.emit('go', now);
-ee.emit('go'); // without arguments
-ee.emit('go.now'); // namespace
-ee.emit(['go', 'foo'], now); // multiple events
-```
+non-standard\
+returns a deferred object including promise and\
+resolve and reject methods to fulfill the promise
+<https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred>
 
-###listeners
+### PromiseX.cast(value)
 
-```javascript
-var ee = new EventEmitter();
-ee.listeners(); // all existing listeners
-ee.listeners('go'); // normal
-ee.listeners('go', 'foo'); // multiple events
-ee.listeners('.now'); // namespace
-```
+ensures to return a promise\
+if value is a promise, return that promise\
+<http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony>
 
-###newListener, removeListener events
+### PromiseX.all(promises)
 
-`newListener` is always fired *after* added to list of events. `removeListener` is always fired *before* removing from list of events.
-`ee` is an object containing `listener, context, namespaces, once`.
+standard\
+returns a Promise that is resolved only if all promises are resolved
+or rejected if any promise of list is rejected\
+resolve function gets array of promise values
 
-```javascript
-var ee = new EventEmitter();
-ee.on('newListener', function(event, ee) {
-	console.log(event, ee.listener);
-});
-ee.on('removeListener', function(event, ee) {
-	console.log(event, ee.listener);
-});
-```
+### PromiseX.race(promises)
+
+standard\
+returns a Promise that is resolved as soon as one promise is resolved
+or rejected as soon as one promise of list is rejected\
+_heads-up_: native function is commented since some checks are missing
+
+### PromiseX.every(promises)
+
+non-standard\
+is fulfilled only if all promises are fulfilled either resolved or rejected.\
+each promise's fulfillment state and value is provided in the propagated value array
+as promise.value and promise.status
+
+### PromiseX.any(promises)
+
+non-standard\
+is fulfilled as soon as any promise is resolved or all promises are rejected
+
+### PromiseX.map(values, mapFunction, [context])
+
+non-standard\
+returns an array of PromiseX created from each value by the map function executed with optional context
+
+### PromiseX.config(option, value)
+
+non-standard\
+influence behaviour of PromiseX plugin\
+'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise
