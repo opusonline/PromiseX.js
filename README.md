@@ -145,4 +145,5 @@ returns an array of PromiseX created from each value by the map function execute
 
 non-standard  
 influence behaviour of PromiseX plugin  
-'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise
+'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise  
+'createPromise' creates a new separate PromiseX instance with a given underlying promise
