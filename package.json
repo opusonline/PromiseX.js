@@ -1,0 +1,18 @@
+{
+  "name": "opusonline-promisex.js",
+  "version": "1.0.0",
+  "author": "Stefan Benicke <stefan.benicke@gmail.com>",
+  "description": "Javascript Promise Xtended - Wrapper to add new methods w/o changing the native promise prototype",
+  "main": "PromiseX.js",
+  "keywords": [
+    "promisex",
+    "promise",
+    "javascript",
+    "opusonline"
+   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opusonline/PromiseX.js.git"
+  },
+  "license": "MIT"
+}
