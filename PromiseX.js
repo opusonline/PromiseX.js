@@ -3,8 +3,9 @@
  * wrapper for promises to add new methods w/o changing the native promise prototype
  * good read: http://pouchdb.com/2015/05/18/we-have-a-problem-with-promises.html
  * also interesting: https://github.com/paldepind/sync-promise
+ * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 1.1.0
+ * @version 1.1.1
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -195,7 +196,7 @@
          * callback is executed with optional context when Promise is fulfilled
          * previous resolved/rejected values are propagated to next Promise
          * addition: callback provides previous promise as parameter (use promise.value and promise.status)
-         * heads-up: errors within callback will propagate as rejected promise
+         * heads-up: no matter what happens in finally callback, after finally the chain is like before
          *
          * @param {function} callback
          * @param {Object} context
@@ -204,13 +205,15 @@
         _defineProperty(proto, 'finally', function (callback, context) {
             var self = this;
             var promise = this.promise.then(function (value) {
-                return _cast(callback.call(context, self)).then(function () { // callback could return a promise
+                function returnValue() {
                     return value;
-                });
+                }
+                return _cast(callback.call(context, self)).then(returnValue, returnValue); // callback could return a promise
             }, function (reason) {
-                return _cast(callback.call(context, self)).then(function () {
+                function throwReason() {
                     throw reason;
-                });
+                }
+                return _cast(callback.call(context, self)).then(throwReason, throwReason);
             });
             return new PromiseX(promise);
         });

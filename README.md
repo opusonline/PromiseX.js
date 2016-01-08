@@ -55,7 +55,7 @@ defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>
 callback is executed with optional context when Promise is fulfilled  
 previous resolved/rejected values are propagated to next Promise  
 _addition_: callback provides previous promise as parameter (use promise.value and promise.status)  
-_heads-up_: errors within callback will propagate as rejected promise  
+_heads-up_: no matter what happens in finally callback, after finally the chain is like before
 
 ### PromiseX#done([resolve], [reject], [context])
 
