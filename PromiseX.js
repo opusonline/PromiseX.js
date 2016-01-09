@@ -5,7 +5,7 @@
  * also interesting: https://github.com/paldepind/sync-promise
  * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 1.1.1
+ * @version 1.1.2
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -195,25 +195,26 @@
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_finally}
          * callback is executed with optional context when Promise is fulfilled
          * previous resolved/rejected values are propagated to next Promise
-         * addition: callback provides previous promise as parameter (use promise.value and promise.status)
-         * heads-up: no matter what happens in finally callback, after finally the chain is like before
+         * attention: this behaves exactly like try-catch-finally
+         * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block}
+         * and is a bit different to others regarding the return value of finally callback
          *
          * @param {function} callback
          * @param {Object} context
          * @return {Object} - new PromiseX
          */
         _defineProperty(proto, 'finally', function (callback, context) {
-            var self = this;
             var promise = this.promise.then(function (value) {
-                function returnValue() {
-                    return value;
-                }
-                return _cast(callback.call(context, self)).then(returnValue, returnValue); // callback could return a promise
+                return _cast(callback.call(context)).then(function(finallyValue) {
+                    return typeof finallyValue !== _undefined ? finallyValue : value;
+                });
             }, function (reason) {
-                function throwReason() {
+                return _cast(callback.call(context)).then(function(finallyValue) {
+                    if (typeof finallyValue !== _undefined) {
+                        return finallyValue;
+                    }
                     throw reason;
-                }
-                return _cast(callback.call(context, self)).then(throwReason, throwReason);
+                });
             });
             return new PromiseX(promise);
         });

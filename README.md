@@ -54,8 +54,9 @@ non-standard, always returns a new Promise
 defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>  
 callback is executed with optional context when Promise is fulfilled  
 previous resolved/rejected values are propagated to next Promise  
-_addition_: callback provides previous promise as parameter (use promise.value and promise.status)  
-_heads-up_: no matter what happens in finally callback, after finally the chain is like before
+_attention_: this behaves exactly like try-catch-finally  
+{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block}  
+and is a bit different to others regarding the return value of finally callback
 
 ### PromiseX#done([resolve], [reject], [context])
 
