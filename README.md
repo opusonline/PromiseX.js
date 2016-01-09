@@ -55,7 +55,7 @@ defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>
 callback is executed with optional context when Promise is fulfilled  
 previous resolved/rejected values are propagated to next Promise  
 _attention_: this behaves exactly like try-catch-finally  
-{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block}  
+<https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block>  
 and is a bit different to others regarding the return value of finally callback
 
 ### PromiseX#done([resolve], [reject], [context])
