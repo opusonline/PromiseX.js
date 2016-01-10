@@ -5,7 +5,7 @@
  * also interesting: https://github.com/paldepind/sync-promise
  * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 1.1.2
+ * @version 1.1.3
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -280,11 +280,7 @@
             var self = this;
             return new PromiseX(function (resolve, reject) {
                 setTimeout(function () {
-                    if (typeof reason !== _undefined) {
-                        reject(reason);
-                    } else {
-                        reject(new Error('Timeout'));
-                    }
+                    reject(new Error(reason || 'Timeout'));
                 }, ms);
                 self.promise.then(resolve, reject);
             });
