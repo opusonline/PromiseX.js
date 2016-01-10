@@ -214,7 +214,7 @@ doAsync().nodeify(function (error, result) {
 });
 ```
 
-### PromiseX#delay(ms, [value])
+### PromiseX#delay(ms)
 
 non-standard  
 used in many Promise libraries like [BluebirdJS][http://bluebirdjs.com/docs/api/promise.delay.html](http://bluebirdjs.com/docs/api/promise.delay.html)  
@@ -223,14 +223,6 @@ previous value or error is propagated
 
 ```javascript
 doAsync().delay(5000).then(function(value) {
-	// 5s after doAsync resolves
-	// value is result of doAsync
-}, function(reason) {
-	// 5s after doAsync rejects
-	// reason is error of doAsync
-});
-
-doAsync().delay(5000, 'delayValue').then(function(value) {
 	// 5s after doAsync resolves
 	// value is result of doAsync
 }, function(reason) {
@@ -270,6 +262,12 @@ PromiseX.timeout(doAsync(), 5000, 'doAsyncTimeout').catch(function(reason) {
 	// or reason.message == 'doAsyncTimeout'
 });
 
+// good practice
+doAsync().then(function() {
+	return PromiseX.timeout(somePromise(), 5000); // timeout starts counting when then is executed
+}).catch(function(reason) {
+	// reason.message == 'Timeout'
+});
 ```
 
 ### PromiseX.delay(ms, [value])
