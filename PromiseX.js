@@ -1,11 +1,11 @@
-/*!
+/**
  * PromiseX - Promise Xtended
  * wrapper for promises to add new methods w/o changing the native promise prototype
  * good read: http://pouchdb.com/2015/05/18/we-have-a-problem-with-promises.html
  * also interesting: https://github.com/paldepind/sync-promise
  * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 1.1.3
+ * @version 1.2.0
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -42,15 +42,13 @@
         var _Promise = global.Promise;
 
         /**
-         * PromiseX
-         *
          * executor should be the execution function called with optional context,
          * if executor is empty the promise is a deferred with resolve and reject functions,
          * if executor is a native promise the new object will be a wrapper for this promise
          * every other executor is treated as PromiseX.resolve(value)
          *
          * @class
-         * @param {function|*} [executor]
+         * @param {undefined|function|*} [executor]
          * @param {Object} [context]
          */
         function PromiseX(executor, context) {
@@ -137,17 +135,15 @@
         _defineProperty(proto, 'value', undefined);
 
         /**
-         * PromiseX.prototype.then
-         *
-         * Just like standard Promise.then, always returns a new Promise
+         * just like standard Promise.then, always returns a new Promise
          * resolve function is executed if previous Promise is resolved
          * reject function is executed if previous Promise is rejected
          * resolve/reject functions are called with optional context
          *
-         * @param {function} [resolve]
+         * @param {function} resolve
          * @param {function} [reject]
          * @param {Object} [context]
-         * @return {Object} - new PromiseX
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'then', function (resolve, reject, context) {
             var promise;
@@ -165,16 +161,14 @@
             return new PromiseX(promise);
         });
         /**
-         * PromiseX.prototype.catch
-         *
-         * Just like standard Promise.catch, always returns a new Promise
+         * just like standard Promise.catch, always returns a new Promise
          * reject function is executed if previous Promise is rejected
          * shorthand for Promise.then(null, reject)
          * reject function is called with optional context
          *
-         * @param {function} [reject]
+         * @param {function} reject
          * @param {Object} [context]
-         * @return {Object} - new PromiseX
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'catch', function (reject, context) {
             var promise;
@@ -189,8 +183,6 @@
             return new PromiseX(promise);
         });
         /**
-         * PromiseX.prototype.finally
-         *
          * non-standard, always returns a new Promise
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_finally}
          * callback is executed with optional context when Promise is fulfilled
@@ -200,8 +192,8 @@
          * and is a bit different to others regarding the return value of finally callback
          *
          * @param {function} callback
-         * @param {Object} context
-         * @return {Object} - new PromiseX
+         * @param {Object} [context]
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'finally', function (callback, context) {
             var promise = this.promise.then(function (value) {
@@ -219,8 +211,6 @@
             return new PromiseX(promise);
         });
         /**
-         * PromiseX.prototype.done
-         *
          * non-standard
          * does *not* return a promise, throws outside promises on next tick
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_done}
@@ -229,7 +219,8 @@
          * @param {function} [resolve]
          * @param {function} [reject]
          * @param {Object} [context]
-         * @throws - any exception that is catch'd from the Promise chain
+         * @throws any exception that is catched from the Promise chain
+         * @return {undefined}
          */
         _defineProperty(proto, 'done', function (resolve, reject, context) {
             this.then(resolve, reject, context).catch(function (reason) {
@@ -239,15 +230,13 @@
             });
         });
         /**
-         * PromiseX.prototype.nodefify
-         *
          * non-standard
          * transforms Promise to node-like callback - meaning: callback(error, value)
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_nodify}
          *
          * @param {function} callback
          * @param {Object} [context]
-         * @return {Object} self
+         * @return {PromiseX} self
          */
         _defineProperty(proto, 'nodeify', function (callback, context) {
             if (typeof callback !== _function) {
@@ -265,43 +254,16 @@
             return this;
         });
         /**
-         * PromiseX.prototype.timeout
-         *
-         * non-standard
-         * used in many Promise libraries like [BluebirdJS]{@link http://bluebirdjs.com/docs/api/timeout.html}
-         * timeout for previous Promise fulfillment
-         * if reason is given, timeout Promise rejects with reason
-         *
-         * @param {Number} ms - Milliseconds
-         * @param {*} [reason]
-         * @return {Object} new PromiseX
-         */
-        _defineProperty(proto, 'timeout', function (ms, reason) {
-            var self = this;
-            return new PromiseX(function (resolve, reject) {
-                setTimeout(function () {
-                    reject(new Error(reason || 'Timeout'));
-                }, ms);
-                self.promise.then(resolve, reject);
-            });
-        });
-        /**
-         * PromiseX.prototype.delay
-         *
          * non-standard
          * used in many Promise libraries like [BluebirdJS]{@link http://bluebirdjs.com/docs/api/promise.delay.html}
          * delays execution of next Promise in chain
-         * if init is given, this Promise resolves with init value otherwise previous value is propagated
+         * previous value or error is propagated
          *
-         * @param {Number} ms - Milliseconds
-         * @param {*} [init]
-         * @return {Object} new PromiseX
+         * @param {Number} ms Milliseconds
+         * @return {PromiseX} new PromiseX
          */
-        _defineProperty(proto, 'delay', function (ms, init) {
+        _defineProperty(proto, 'delay', function (ms) {
             var promise = this.promise.then(function (value) {
-                if (typeof init !== _undefined) {
-                    value = init;
-                }
                 return new _Promise(function (resolve) {
                     setTimeout(function () {
                         resolve(value);
@@ -317,12 +279,10 @@
             return new PromiseX(promise);
         });
         /**
-         * PromiseX.resolve
-         *
          * standard, returns a resolved Promise with given value
          *
-         * @param {*} value
-         * @return {Object} new PromiseX
+         * @param {*} [value]
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'resolve', function (value) {
             if (value instanceof PromiseX) { // strange since resolve should always return a new promise that mimics any other promise, but this is native behaviour
@@ -333,12 +293,10 @@
             });
         });
         /**
-         * PromiseX.reject
-         *
          * standard, returns a rejected Promise with given reason
          *
-         * @param {*} reason
-         * @return {Object} new PromiseX
+         * @param {*} [reason]
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'reject', function (reason) {
             return new PromiseX(function (_, reject) {
@@ -346,14 +304,34 @@
             });
         });
         /**
-         * PromiseX.delay
+         * non standard
+         * used in many Promise libraries like [BluebirdJS]{@link http://bluebirdjs.com/docs/api/timeout.html}
+         * example here {@link https://www.promisejs.org/patterns/#race}
+         * timeout for given Promise fulfillment
+         * if reason is given, timeout Promise rejects with reason
+         * _heads-up:_ I refused doAsync().timeout() because I want to avoid using timeout later in promise chain
+         * since setTimeout starts immediately when calling and not when promise starts
          *
+         * @param {Promise} promise
+         * @param {Number} ms Milliseconds
+         * @param {String} [reason]
+         * @return {PromiseX} new PromiseX
+         */
+        _defineProperty(PromiseX, 'timeout', function(promise, ms, reason) {
+            return new PromiseX(function(resolve, reject) {
+                setTimeout(function() {
+                    reject(new Error(reason || 'Timeout'));
+                }, ms);
+                promise.then(resolve, reject);
+            });
+        });
+        /**
          * non-standard
          * returns a resolved Promise with given value after certain amount of time
          *
-         * @param {Number} ms - Milliseconds
-         * @param {*} value
-         * @return {Object} new PromiseX
+         * @param {Number} ms Milliseconds
+         * @param {*} [value]
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'delay', function (ms, value) {
             return new PromiseX(function (resolve) {
@@ -363,27 +341,23 @@
             });
         });
         /**
-         * PromiseX.deferred
-         *
          * non-standard
          * returns a deferred object including promise and
          * resolve and reject methods to fulfill the promise
          * {@link https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred}
          *
-         * @return {Object} deferred
+         * @return {PromiseX} deferred
          */
         _defineProperty(PromiseX, 'defer', function () {
             return new PromiseX();
         });
         /**
-         * PromiseX.cast
-         *
          * ensures to return a promise
          * if value is a promise, return that promise
          * {@link http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony}
          *
          * @param {*} value
-         * @return {Object} new PromiseX
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'cast', function (value) {
             if (value instanceof PromiseX) {
@@ -397,15 +371,13 @@
             return new PromiseX(value); // this way native promises are wrapped and other values are resolved
         });
         /**
-         * PromiseX.all
-         *
          * standard
          * returns a Promise that is resolved only if all promises are resolved
          * or rejected if any promise of list is rejected
          * resolve function gets array of promise values
          *
-         * @param {Object[]} promises
-         * @return {Object} new PromiseX
+         * @param {Array<Promise>} promises
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'all', function (promises) {
             return new PromiseX(function (resolve, reject) {
@@ -413,15 +385,13 @@
             });
         });
         /**
-         * PromiseX.race
-         *
          * standard
          * returns a Promise that is resolved as soon as one promise is resolved
          * or rejected as soon as one promise of list is rejected
-         * Heads-up: native function is commented since some checks are missing
+         * _heads-up:_ native function is commented since some checks are missing
          *
-         * @param {Object[]} promises
-         * @return {Object} new PromiseX
+         * @param {Array<Promise>} promises
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'race', function (promises) {
             //return new PromiseX(function(resolve, reject) {
@@ -445,15 +415,13 @@
             });
         });
         /**
-         * PromiseX.every
-         *
          * non-standard
          * is fulfilled only if all promises are fulfilled either resolved or rejected.
          * each promise's fulfillment state and value is provided in the propagated value array
          * as promise.value and promise.status
          *
-         * @param {Object[]} promises
-         * @return {Object} new PromiseX
+         * @param {Array<Promise>} promises
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'every', function (promises) {
             return new PromiseX(function (resolve) {
@@ -485,13 +453,11 @@
             });
         });
         /**
-         * PromiseX.any
-         *
          * non-standard
          * is fulfilled as soon as any promise is resolved or all promises are rejected
          *
-         * @param {Object[]} promises
-         * @return {Object} new PromiseX
+         * @param {Array<Promise>} promises
+         * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'any', function (promises) {
             return new PromiseX(function (resolve, reject) {
@@ -525,15 +491,13 @@
             });
         });
         /**
-         * PromiseX.map
-         *
          * non-standard
          * returns an array of PromiseX created from each value by the map function executed with optional context
          *
-         * @param {*} values - Array of values
+         * @param {Array<*>} values Array of values
          * @param {function} mapFunction
          * @param {Object} [context]
-         * @return {Object[]} promises
+         * @return {Array<PromiseX>} promises
          */
         _defineProperty(PromiseX, 'map', function (values, mapFunction, context) {
             if (typeof mapFunction !== _function) {
@@ -550,16 +514,14 @@
             return promises;
         });
         /**
-         * PromiseX.config
-         *
          * non-standard
          * influence behaviour of PromiseX plugin
          * 'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise
          * 'createPromise' creates a new separate PromiseX instance with a given underlying promise
          *
          * @param {String} option
-         * @param {*} value
-         * @return {boolean|*} - success state or requested config option
+         * @param {*} [value]
+         * @return {boolean|*} success state or requested config option
          */
         _defineProperty(PromiseX, 'config', function (option, value) {
             if (option === 'getPromise') {

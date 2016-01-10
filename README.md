@@ -88,7 +88,7 @@ if (promise.status === PromiseX.RESOLVED) {
 
 ### PromiseX#then(resolve, [reject], [context])
 
-Just like standard Promise.then, always returns a new Promise  
+just like standard Promise.then, always returns a new Promise  
 resolve function is executed if previous Promise is resolved  
 reject function is executed if previous Promise is rejected  
 resolve/reject functions are called with optional context
@@ -120,7 +120,7 @@ doAsync().then(function(value) {
 
 ### PromiseX#catch(reject, [context])
 
-Just like standard Promise.catch, always returns a new Promise  
+just like standard Promise.catch, always returns a new Promise  
 reject function is executed if previous Promise is rejected  
 shorthand for Promise.then(null, reject)  
 reject function is called with optional context
@@ -144,8 +144,8 @@ non-standard, always returns a new Promise
 defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>  
 callback is executed with optional context when Promise is fulfilled  
 previous resolved/rejected values are propagated to next Promise  
-_attention_: this behaves exactly like try-catch-finally  
-<https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block>  
+_attention:_ this behaves exactly like try-catch-finally
+<https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block>
 and is a bit different to others regarding the return value of finally callback
 
 ```javascript
@@ -184,6 +184,7 @@ if resolve/reject is/are provided, a last Promise.then is executed with optional
 
 ```javascript
 // default use
+
 doAsync().then(doStuff).done();
 
 // then().done() in one
@@ -213,34 +214,30 @@ doAsync().nodeify(function (error, result) {
 });
 ```
 
-### PromiseX#timeout(ms, [reason])
-
-non-standard  
-used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/timeout.html)  
-timeout for previous Promise fulfillment  
-if reason is given, timeout Promise rejects with reason
-
-```javascript
-doAsync().timeout(5000).then(function (value) {
-	// result of doAsync in under 5000ms
-}, function(reason) {
-	// error from doAsync in under 5000ms
-	// or reason.message == Timeout otherwise since Error('Timeout') is thrown
-});
-
-doAsync().timeout(5000, 'doAsyncTimeout').catch(function(reason) {
-	// error from doAsync in under 5000ms
-	// or reason.message == 'doAsyncTimeout'
-});
-
-```
-
 ### PromiseX#delay(ms, [value])
 
 non-standard  
-used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/promise.delay.html)  
+used in many Promise libraries like [BluebirdJS][http://bluebirdjs.com/docs/api/promise.delay.html](http://bluebirdjs.com/docs/api/promise.delay.html)  
 delays execution of next Promise in chain  
-if init value is given, this Promise resolves with init value otherwise previous value is propagated
+previous value or error is propagated
+
+```javascript
+doAsync().delay(5000).then(function(value) {
+	// 5s after doAsync resolves
+	// value is result of doAsync
+}, function(reason) {
+	// 5s after doAsync rejects
+	// reason is error of doAsync
+});
+
+doAsync().delay(5000, 'delayValue').then(function(value) {
+	// 5s after doAsync resolves
+	// value is result of doAsync
+}, function(reason) {
+	// 5s after doAsync rejects
+	// reason is error of doAsync
+});
+```
 
 ### PromiseX.resolve(value)
 
@@ -250,16 +247,41 @@ standard, returns a resolved Promise with given value
 
 standard, returns a rejected Promise with given reason
 
+### PromiseX.timeout()
+
+non standard  
+used in many Promise libraries like [BluebirdJS][http://bluebirdjs.com/docs/api/timeout.html](http://bluebirdjs.com/docs/api/timeout.html)  
+example here <https://www.promisejs.org/patterns/#race>  
+timeout for given Promise fulfillment  
+if reason is given, timeout Promise rejects with reason  
+_heads-up:_ I refused doAsync().timeout() because I want to avoid using timeout later in promise chain  
+since setTimeout starts immediately when calling and not when promise starts
+
+```javascript
+PromiseX.timeout(doAsync(), 5000).then(function (value) {
+	// result of doAsync in under 5000ms
+}, function(reason) {
+	// error from doAsync in under 5000ms
+	// or reason.message == Timeout otherwise since Error('Timeout') is thrown
+});
+
+PromiseX.timeout(doAsync(), 5000, 'doAsyncTimeout').catch(function(reason) {
+	// error from doAsync in under 5000ms
+	// or reason.message == 'doAsyncTimeout'
+});
+
+```
+
 ### PromiseX.delay(ms, [value])
 
 non-standard  
-returns a resolved Promise with given value after certain amount of time in milliseconds
+returns a resolved Promise with given value after certain amount of time
 
 ### PromiseX.defer
 
 non-standard  
 returns a deferred object including promise and  
-resolve and reject methods to fulfill the promise
+resolve and reject methods to fulfill the promise  
 <https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred>
 
 ### PromiseX.cast(value)
@@ -271,22 +293,22 @@ if value is a promise, return that promise
 ### PromiseX.all(promises)
 
 standard  
-returns a Promise that is resolved only if all promises are resolved
+returns a Promise that is resolved only if all promises are resolved  
 or rejected if any promise of list is rejected  
 resolve function gets array of promise values
 
 ### PromiseX.race(promises)
 
 standard  
-returns a Promise that is resolved as soon as one promise is resolved
+returns a Promise that is resolved as soon as one promise is resolved  
 or rejected as soon as one promise of list is rejected  
-_heads-up_: native function is commented since some checks are missing
+_heads-up:_ native function is commented since some checks are missing
 
 ### PromiseX.every(promises)
 
 non-standard  
 is fulfilled only if all promises are fulfilled either resolved or rejected.  
-each promise's fulfillment state and value is provided in the propagated value array
+each promise's fulfillment state and value is provided in the propagated value array  
 as promise.value and promise.status
 
 ### PromiseX.any(promises)
@@ -299,7 +321,7 @@ is fulfilled as soon as any promise is resolved or all promises are rejected
 non-standard  
 returns an array of PromiseX created from each value by the map function executed with optional context
 
-### PromiseX.config(option, value)
+### PromiseX.config(option, [value])
 
 non-standard  
 influence behaviour of PromiseX plugin  
