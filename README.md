@@ -187,7 +187,7 @@ if resolve/reject is/are provided, a last Promise.then is executed with optional
 doAsync().then(doStuff).done();
 
 // then().done() in one
-doAsync.done(doStuff);
+doAsync().done(doStuff);
 
 // catch outside
 try {
