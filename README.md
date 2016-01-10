@@ -28,11 +28,63 @@ if executor is empty the promise is a deferred with resolve and reject functions
 if executor is a native promise the new object will be a wrapper for this promise  
 every other executor is treated as PromiseX.resolve(value)
 
+```javascript
+// default use
+var promise = new PromiseX(function(resolve, reject) {
+	var async = doSomeAsyncStuff();
+	async.onready = resolve;
+	async.onerror = reject;
+});
+
+// extended
+var promise = new PromiseX(function(resolve, reject, self) {
+	var async = doSomeAsyncStuff();
+	async.onready = resolve;
+	async.onerror = reject;
+	self.cancel = function() {
+		reject(new Error('canceled));
+	};
+});
+promise.cancel();
+
+// context
+var collection = {};
+collection.promise = new PromiseX(function(resolve) {
+	this.resolve = function(value) {
+		resolve(value);
+		return this.promise;
+	};
+}, collection);
+collection.resolve('resolved').then(…);
+
+// PromiseX.resolve(value)
+var promise = new PromiseX('resolved');
+
+// PromiseX.defer() including resolve/reject
+var promise = new PromiseX();
+promise.resolve('resolved');
+
+// PromiseX.cast() or PromiseX.resolve() for underlying promises
+var nativePromise = Promise.resolve('native');
+var promiseX = new PromiseX(nativePromise);
+promiseX.then(…);
+
+// status and value
+var promise = PromiseX.resolve('foo'); // promise.status == 'resolved'; promise.value == 'foo'
+```
+
 ### Constants
 
  * PromiseX.PENDING
  * PromiseX.RESOLVED
  * PromiseX.REJECTED
+ 
+```javascript
+var promise = Promise.resolve('foo');
+if (promise.status === PromiseX.RESOLVED) {
+	doStuff();
+}
+```
 
 ### PromiseX#then(resolve, [reject], [context])
 
@@ -41,12 +93,50 @@ resolve function is executed if previous Promise is resolved
 reject function is executed if previous Promise is rejected  
 resolve/reject functions are called with optional context
 
+```javascript
+// default use
+doAsync().then(function(value) {
+	console.log(value);
+});
+
+// resolve and reject
+doAsync().then(function(value) {
+	console.log(value);
+}, function(reason) {
+	console.error(reason);
+});
+
+// catch
+doAsync().then(null, function(reason) {
+	console.error(reason);
+});
+
+// context
+var collection = {};
+doAsync().then(function(value) {
+	this.result = value;
+}, null, collection);           // null is for reject function
+```
+
 ### PromiseX#catch(reject, [context])
 
 Just like standard Promise.catch, always returns a new Promise  
 reject function is executed if previous Promise is rejected  
 shorthand for Promise.then(null, reject)  
 reject function is called with optional context
+
+```javascript
+// default use
+doAsync().catch(function(reason) {
+	console.error(reason);
+});
+
+// context
+var collection = {};
+doAsync().catch(function(reason) {
+	this.result = reason;
+}, collection);
+```
 
 ### PromiseX#finally(callback, [context])
 
@@ -58,6 +148,33 @@ _attention_: this behaves exactly like try-catch-finally
 <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block>  
 and is a bit different to others regarding the return value of finally callback
 
+```javascript
+// default use
+showLoadingSpinner();
+doAsync().finally(function() { // or just .finally(hideLoadingSpinner) but be sure that hideLoadingSpinner returns no value
+	hideLoadingSpinner();
+	// return;
+}).then(function(value) {
+	// result of doAsync is shown here
+	console.log(value);
+}).catch(function(reason) {
+	// errors in doAsync will be catched here
+	console.error(reason);
+});
+
+PromiseX.reject('error').finally(function() {
+	throw 'finally error';	
+}).catch(function(reason) {
+	// reason == 'finally error';
+});
+
+PromiseX.resolve('foo').finally(function() {
+	return 'bar';
+}).then(function(reason) {
+	// reason == 'bar';
+});
+```
+
 ### PromiseX#done([resolve], [reject], [context])
 
 non-standard  
@@ -65,11 +182,36 @@ does *not* return a promise, throws outside promises on next tick
 defined here: <https://www.promisejs.org/api/#Promise_prototype_done>  
 if resolve/reject is/are provided, a last Promise.then is executed with optional context
 
+```javascript
+// default use
+doAsync().then(doStuff).done();
+
+// then().done() in one
+doAsync.done(doStuff);
+
+// catch outside
+try {
+	PromiseX.reject(Error('reject')).done();
+} catch(e) {
+	// e.message == 'reject'
+}
+```
+
 ### PromiseX#nodeify(callback, [context])
 
 non-standard  
 transforms Promise to node-like callback - meaning: callback(error, value)  
 defined here: <https://www.promisejs.org/api/#Promise_prototype_nodify>
+
+```javascript
+doAsync().nodeify(function (error, result) {
+	if (error) {
+		console.error(error);
+		return;
+	}
+	doStuff(result);
+});
+```
 
 ### PromiseX#timeout(ms, [reason])
 
@@ -77,6 +219,21 @@ non-standard
 used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/timeout.html)  
 timeout for previous Promise fulfillment  
 if reason is given, timeout Promise rejects with reason
+
+```javascript
+doAsync().timeout(5000).then(function (value) {
+	// result of doAsync in under 5000ms
+}, function(reason) {
+	// error from doAsync in under 5000ms
+	// or reason.message == Timeout otherwise since Error('Timeout') is thrown
+});
+
+doAsync().timeout(5000, 'doAsyncTimeout').catch(function(reason) {
+	// error from doAsync in under 5000ms
+	// or reason.message == 'doAsyncTimeout'
+});
+
+```
 
 ### PromiseX#delay(ms, [value])
 
