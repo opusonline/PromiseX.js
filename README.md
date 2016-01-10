@@ -42,7 +42,7 @@ var promise = new PromiseX(function(resolve, reject, self) {
 	async.onready = resolve;
 	async.onerror = reject;
 	self.cancel = function() {
-		reject(new Error('canceled));
+		reject(new Error('canceled'));
 	};
 });
 promise.cancel();
