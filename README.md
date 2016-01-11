@@ -217,7 +217,7 @@ doAsync().nodeify(function (error, result) {
 ### PromiseX#delay(ms)
 
 non-standard  
-used in many Promise libraries like [BluebirdJS][http://bluebirdjs.com/docs/api/promise.delay.html](http://bluebirdjs.com/docs/api/promise.delay.html)  
+used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/promise.delay.html)  
 delays execution of next Promise in chain  
 previous value or error is propagated
 
@@ -250,7 +250,7 @@ PromiseX.reject('fail');
 ### PromiseX.timeout()
 
 non standard  
-used in many Promise libraries like [BluebirdJS][http://bluebirdjs.com/docs/api/timeout.html](http://bluebirdjs.com/docs/api/timeout.html)  
+used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/timeout.html)  
 example here <https://www.promisejs.org/patterns/#race>  
 timeout for given Promise fulfillment  
 if reason is given, timeout Promise rejects with reason  
