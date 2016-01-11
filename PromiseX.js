@@ -5,7 +5,7 @@
  * also interesting: https://github.com/paldepind/sync-promise
  * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 1.2.0
+ * @version 1.2.1
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -140,6 +140,7 @@
          * reject function is executed if previous Promise is rejected
          * resolve/reject functions are called with optional context
          *
+         * @memberOf PromiseX#
          * @param {function} resolve
          * @param {function} [reject]
          * @param {Object} [context]
@@ -166,6 +167,7 @@
          * shorthand for Promise.then(null, reject)
          * reject function is called with optional context
          *
+         * @memberOf PromiseX#
          * @param {function} reject
          * @param {Object} [context]
          * @return {PromiseX} new PromiseX
@@ -191,6 +193,7 @@
          * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block}
          * and is a bit different to others regarding the return value of finally callback
          *
+         * @memberOf PromiseX#
          * @param {function} callback
          * @param {Object} [context]
          * @return {PromiseX} new PromiseX
@@ -216,6 +219,7 @@
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_done}
          * if resolve/reject is/are provided, a last Promise.then is executed with optional context
          *
+         * @memberOf PromiseX#
          * @param {function} [resolve]
          * @param {function} [reject]
          * @param {Object} [context]
@@ -234,6 +238,7 @@
          * transforms Promise to node-like callback - meaning: callback(error, value)
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_nodify}
          *
+         * @memberOf PromiseX#
          * @param {function} callback
          * @param {Object} [context]
          * @return {PromiseX} self
@@ -259,6 +264,7 @@
          * delays execution of next Promise in chain
          * previous value or error is propagated
          *
+         * @memberOf PromiseX#
          * @param {Number} ms Milliseconds
          * @return {PromiseX} new PromiseX
          */
@@ -281,6 +287,7 @@
         /**
          * standard, returns a resolved Promise with given value
          *
+         * @memberOf PromiseX
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
          */
@@ -295,6 +302,7 @@
         /**
          * standard, returns a rejected Promise with given reason
          *
+         * @memberOf PromiseX
          * @param {*} [reason]
          * @return {PromiseX} new PromiseX
          */
@@ -312,6 +320,7 @@
          * _heads-up:_ I refused doAsync().timeout() because I want to avoid using timeout later in promise chain
          * since setTimeout starts immediately when calling and not when promise starts
          *
+         * @memberOf PromiseX
          * @param {Promise} promise
          * @param {Number} ms Milliseconds
          * @param {String} [reason]
@@ -329,6 +338,7 @@
          * non-standard
          * returns a resolved Promise with given value after certain amount of time
          *
+         * @memberOf PromiseX
          * @param {Number} ms Milliseconds
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
@@ -346,6 +356,7 @@
          * resolve and reject methods to fulfill the promise
          * {@link https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred}
          *
+         * @memberOf PromiseX
          * @return {PromiseX} deferred
          */
         _defineProperty(PromiseX, 'defer', function () {
@@ -356,6 +367,7 @@
          * if value is a promise, return that promise
          * {@link http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony}
          *
+         * @memberOf PromiseX
          * @param {*} value
          * @return {PromiseX} new PromiseX
          */
@@ -376,6 +388,7 @@
          * or rejected if any promise of list is rejected
          * resolve function gets array of promise values
          *
+         * @memberOf PromiseX
          * @param {Array<Promise>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -390,6 +403,7 @@
          * or rejected as soon as one promise of list is rejected
          * _heads-up:_ native function is commented since some checks are missing
          *
+         * @memberOf PromiseX
          * @param {Array<Promise>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -407,7 +421,7 @@
                         return resolve();
                     }
                     for (i = 0; i < n; i++) {
-                        _cast(promises[i]).then(resolve, reject);
+                        PromiseX.cast(promises[i]).then(resolve, reject);
                     }
                 } else {
                     resolve(promises);
@@ -420,6 +434,7 @@
          * each promise's fulfillment state and value is provided in the propagated value array
          * as promise.value and promise.status
          *
+         * @memberOf PromiseX
          * @param {Array<Promise>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -456,6 +471,7 @@
          * non-standard
          * is fulfilled as soon as any promise is resolved or all promises are rejected
          *
+         * @memberOf PromiseX
          * @param {Array<Promise>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -483,7 +499,7 @@
                     };
                     var i, n;
                     for (i = 0, n = count; i < n; i++) {
-                        _cast(promises[i]).then(success, error);
+                        PromiseX.cast(promises[i]).then(success, error);
                     }
                 } else {
                     resolve(promises);
@@ -494,6 +510,7 @@
          * non-standard
          * returns an array of PromiseX created from each value by the map function executed with optional context
          *
+         * @memberOf PromiseX
          * @param {Array<*>} values Array of values
          * @param {function} mapFunction
          * @param {Object} [context]
@@ -519,6 +536,7 @@
          * 'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise
          * 'createPromise' creates a new separate PromiseX instance with a given underlying promise
          *
+         * @memberOf PromiseX
          * @param {String} option
          * @param {*} [value]
          * @return {boolean|*} success state or requested config option
