@@ -291,7 +291,7 @@ PromiseX.delay(5000, 'foo').then(function(value) {
 
 // fancy Promise timeout
 PromiseX.race([doAsync(), PromiseX.delay(100).then(function(){
-	throw new Error('timeout);
+	throw new Error('timeout');
 })]).catch(function(reason) {
 	// reason == doAsync error or timeout
 });
@@ -380,7 +380,7 @@ PromiseX.race([doAsync1(), doAsync2()]).then(function(value) {
 
 // nice for timeout
 PromiseX.race([doAsync(), PromiseX.delay(100).then(function(){
-	throw new Error('timeout);
+	throw new Error('timeout');
 })]).catch(function(reason) {
 	// reason == doAsync error or timeout
 });
