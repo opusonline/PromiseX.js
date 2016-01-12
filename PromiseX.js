@@ -5,7 +5,7 @@
  * also interesting: https://github.com/paldepind/sync-promise
  * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 1.2.1
+ * @version 1.3.0
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -49,7 +49,7 @@
          *
          * @class
          * @param {undefined|function|*} [executor]
-         * @param {Object} [context]
+         * @param {Object} [context] Context for executor
          */
         function PromiseX(executor, context) {
             if (!(this instanceof PromiseX)) {
@@ -143,7 +143,7 @@
          * @memberOf PromiseX#
          * @param {function} resolve
          * @param {function} [reject]
-         * @param {Object} [context]
+         * @param {Object} [context] Context for resolve/reject function
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'then', function (resolve, reject, context) {
@@ -169,7 +169,7 @@
          *
          * @memberOf PromiseX#
          * @param {function} reject
-         * @param {Object} [context]
+         * @param {Object} [context] Context for reject function
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'catch', function (reject, context) {
@@ -195,7 +195,7 @@
          *
          * @memberOf PromiseX#
          * @param {function} callback
-         * @param {Object} [context]
+         * @param {Object} [context] Context for callback
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'finally', function (callback, context) {
@@ -222,7 +222,7 @@
          * @memberOf PromiseX#
          * @param {function} [resolve]
          * @param {function} [reject]
-         * @param {Object} [context]
+         * @param {Object} [context] Context for resolve/reject function
          * @throws any exception that is catched from the Promise chain
          * @return {undefined}
          */
@@ -240,7 +240,7 @@
          *
          * @memberOf PromiseX#
          * @param {function} callback
-         * @param {Object} [context]
+         * @param {Object} [context] Context for callback
          * @return {PromiseX} self
          */
         _defineProperty(proto, 'nodeify', function (callback, context) {
@@ -374,6 +374,8 @@
         _defineProperty(PromiseX, 'cast', function (value) {
             if (value instanceof PromiseX) {
                 return value;
+            } else if (typeof value === _undefined) {
+                value = _cast();
             }
             //else if (value instanceof _Promise) {
             //    return new PromiseX(value);
@@ -404,7 +406,7 @@
          * _heads-up:_ native function is commented since some checks are missing
          *
          * @memberOf PromiseX
-         * @param {Array<Promise>} promises
+         * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'race', function (promises) {
@@ -413,7 +415,7 @@
             //});
             return new PromiseX(function (resolve, reject) {
                 if (typeof promises === _undefined || promises === null) {
-                    throw new TypeError('First argument needs to be an array of promises.');
+                    throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 if (_isArray(promises)) {
                     var i, n = promises.length;
@@ -421,7 +423,7 @@
                         return resolve();
                     }
                     for (i = 0; i < n; i++) {
-                        PromiseX.cast(promises[i]).then(resolve, reject);
+                        _cast(promises[i]).then(resolve, reject);
                     }
                 } else {
                     resolve(promises);
@@ -435,18 +437,15 @@
          * as promise.value and promise.status
          *
          * @memberOf PromiseX
-         * @param {Array<Promise>} promises
+         * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'every', function (promises) {
             return new PromiseX(function (resolve) {
                 if (typeof promises === _undefined || promises === null) {
-                    throw new TypeError('First argument needs to be an array of promises.');
+                    throw new TypeError('First argument needs to be an array of promises or values.');
                 }
-                if (_isArray(promises) === false) {
-                    promises = [promises];
-                }
-                var count = promises.length;
+                var count = _isArray(promises) ? promises.length : 1;
                 var result = new Array(count);
                 if (count === 0) {
                     return resolve(result);
@@ -457,7 +456,7 @@
                         resolve(result);
                     }
                 };
-                _forEach(promises, function (promise, index) {
+                _forEach(promises, function (promise, index) { // if promises is no array forEach transforms it
                     promise = PromiseX.cast(promise);
                     var next = function () {
                         result[index] = promise;
@@ -472,13 +471,13 @@
          * is fulfilled as soon as any promise is resolved or all promises are rejected
          *
          * @memberOf PromiseX
-         * @param {Array<Promise>} promises
+         * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'any', function (promises) {
             return new PromiseX(function (resolve, reject) {
                 if (typeof promises === _undefined || promises === null) {
-                    throw new TypeError('First argument needs to be an array of promises.');
+                    throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 if (_isArray(promises)) {
                     var resolved = false;
@@ -499,7 +498,7 @@
                     };
                     var i, n;
                     for (i = 0, n = count; i < n; i++) {
-                        PromiseX.cast(promises[i]).then(success, error);
+                        _cast(promises[i]).then(success, error);
                     }
                 } else {
                     resolve(promises);
@@ -509,11 +508,13 @@
         /**
          * non-standard
          * returns an array of PromiseX created from each value by the map function executed with optional context
+         * mapFunction is called as mapper(current, index, length, values)
+         * _heads-up:_ take care of errors; invalid input throws
          *
          * @memberOf PromiseX
          * @param {Array<*>} values Array of values
-         * @param {function} mapFunction
-         * @param {Object} [context]
+         * @param {function} mapFunction Called as mapper(current, index, length, values)
+         * @param {Object} [context] Context for mapFunction
          * @return {Array<PromiseX>} promises
          */
         _defineProperty(PromiseX, 'map', function (values, mapFunction, context) {
@@ -532,6 +533,36 @@
         });
         /**
          * non-standard
+         * reduces an array of promises or values to one promise chain
+         * reduceFunction(previous, current, index, length) is called after previous promise is resolved
+         * with the result of previous promise and current promise; first result is initialValue or undefined
+         * used in used in many Promise libraries like [BluebirdJS]{@link http://bluebirdjs.com/docs/api/timeout.html}
+         * or slightly different here [promise-reduce]{@link https://github.com/yoshuawuyts/promise-reduce}
+         *
+         * @memberOf PromiseX
+         * @param {Array<*|Promise>} values Array of promises or values
+         * @param {function} reduceFunction Called as reducer(previous, current, index, length, values) previous is initialValue or undefined
+         * @param {*} [initialValue]
+         * @param {Object} [context] Context for reduceFunction
+         * @return {PromiseX} new PromiseX
+         */
+        _defineProperty(PromiseX, 'reduce', function (values, reduceFunction, initialValue, context) {
+            return new PromiseX(function(resolve, reject) {
+                if (typeof reduceFunction !== _function) {
+                    throw new TypeError('Reduce-function is no valid function');
+                }
+                var length = _isArray(values) ? values.length : 1;
+                var sequence = _Promise.resolve(initialValue);
+                _forEach(values, function (value, index) { // if values is no array forEach transforms it
+                    sequence = sequence.then(function(result) {
+                        return reduceFunction.call(context, result, value, index, length, values);
+                    });
+                });
+                sequence.then(resolve, reject);
+            });
+        });
+        /**
+         * non-standard
          * influence behaviour of PromiseX plugin
          * 'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise
          * 'createPromise' creates a new separate PromiseX instance with a given underlying promise
@@ -539,7 +570,7 @@
          * @memberOf PromiseX
          * @param {String} option
          * @param {*} [value]
-         * @return {boolean|*} success state or requested config option
+         * @return {boolean|*} Success state or requested config option
          */
         _defineProperty(PromiseX, 'config', function (option, value) {
             if (option === 'getPromise') {
