@@ -428,7 +428,9 @@ PromiseX.any(requests).then(function(response) {
 ### PromiseX.map(values, mapFunction, [context])
 
 non-standard  
-returns an array of PromiseX created from each value by the map function executed with optional context
+returns an array of PromiseX created from each value by the map function executed with optional context  
+mapFunction is called as mapper(current, index, length, values)
+_heads-up:_ take care of errors; invalid input throws
 
 ```javascript
 var requestConfig = {
@@ -437,7 +439,10 @@ var requestConfig = {
 
 var requests = PromiseX.map(['c1.json', c2.json], function(file) {
 	var request = new Request('endpoint/' + file, requestConfig);
-	return fetch(request).then(function(response) {
+	return fetch(request).then(function(response) {             // see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+		if (response.ok === false) {
+			throw new TypeError('Invalid response');
+		}
 		return response.json();
 	});
 });
@@ -449,7 +454,50 @@ requests.forEach(function(promise) {
 });
 
 // usecase
-PromiseX.every(requests).then(…);
+PromiseX.every(requests).then(…).catch(…);
+```
+
+### PromiseX.reduce(values, reduceFunction, [initialValue], [context])
+
+non-standard  
+reduces an array of promises or values to one promise chain  
+reduceFunction(previous, current, index, length) is called after previous promise is resolved  
+with the result of previous promise and current promise; first result is initialValue or undefined  
+used in used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/timeout.html)  
+or slightly different here [promise-reduce](https://github.com/yoshuawuyts/promise-reduce)
+
+```javascript
+// simple usecase
+PromiseX.reduce(['entries-10.txt', 'entries-20.txt'], function(result, file) {
+	return readEntriesAsync(file).then(function(entries) {
+		// entries of entries-10 is 10 and so on
+		return entries + result;            // first result = 0 (initValue)
+	});
+}, 0).then(function(total) {
+	// total == 0 + 10 + 20 = 30
+});
+// even simpler
+PromiseX.reduce([1, 2, 3], function(total, current) {
+	return total + current;
+}, 0).then(function(total) {
+	// total == 6
+});
+
+// example adapted from http://www.html5rocks.com/en/tutorials/es6/promises/#toc-creating-sequences
+var urls = ['chapter-1.json', 'chapter-2.json', …];
+var requests = PromiseX.map(urls, getJSON);         // start loading each immediately
+PromiseX.reduce(requests, function(_, chapterPromise) {
+	return chapterPromise.then(function(chapter) {
+		addHTMLToPage(chapter.htmlContent);         // add in correct order as soon as loaded
+	});
+}).then(function() {
+	addTextToPage("All done");
+}).catch(function(err) {
+	// catch any error that happened along the way
+	addTextToPage("Argh, broken: " + err.message);
+}).finally(function() {
+	document.querySelector('.spinner').style.display = 'none';
+});
 ```
 
 ### PromiseX.config(option, [value])
