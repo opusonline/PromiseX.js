@@ -5,7 +5,7 @@
  * also interesting: https://github.com/paldepind/sync-promise
  * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 1.3.0
+ * @version 2.0.0
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -15,24 +15,25 @@
             return setTimeout(callback, 0);
         };
 
-    var _defineProperty = (function () {
-        try {
-            Object.defineProperty({}, 'x', {});
-            return function (object, name, value) {
-                return Object.defineProperty(object, name, {
-                    value: value,
-                    writable: true,
-                    enumerable: false,
-                    configurable: true
-                });
-            };
-        } catch (e) {
-        }
-        return function (object, name, value) {
+    var _defineProperty;
+    var _definePropertyOldSchool = false;
+    try {
+        Object.defineProperty({}, 'x', {});
+        _defineProperty = function _defineProperty(object, name, value) {
+            return Object.defineProperty(object, name, {
+                value: value,
+                writable: true,
+                enumerable: false,
+                configurable: true
+            });
+        };
+    } catch (e) {
+        _definePropertyOldSchool = true;
+        _defineProperty = function _defineProperty(object, name, value) {
             object[name] = value;
             return object;
         };
-    })();
+    }
 
     var _undefined = 'undefined';
     var _function = 'function';
@@ -146,19 +147,19 @@
          * @param {Object} [context] Context for resolve/reject function
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(proto, 'then', function (resolve, reject, context) {
-            var promise;
-            if (typeof context !== _undefined) {
-                var thenResolve = typeof resolve !== _function ? resolve : function (value) {
-                    return resolve.call(context, value);
-                };
-                var thenReject = typeof reject !== _function ? reject : function (reason) {
-                    return reject.call(context, reason);
-                };
-                promise = this.promise.then(thenResolve, thenReject);
-            } else {
-                promise = this.promise.then(resolve, reject);
-            }
+        _defineProperty(proto, 'then', function PromiseX_then(resolve, reject, context) {
+            var thenResolve = typeof resolve !== _function ? resolve : function (value) {
+                if (_isCancelled(value)) {
+                    return value;
+                }
+                var result = resolve.call(context, value);
+                return _isPromiseX(result) ? result.promise : result;
+            };
+            var thenReject = typeof reject !== _function ? reject : function (reason) {
+                var result = reject.call(context, reason);
+                return _isPromiseX(result) ? result.promise : result;
+            };
+            var promise = this.promise.then(thenResolve, thenReject);
             return new PromiseX(promise);
         });
         /**
@@ -172,13 +173,13 @@
          * @param {Object} [context] Context for reject function
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(proto, 'catch', function (reject, context) {
+        _defineProperty(proto, 'catch', function PromiseX_catch(reject, context) {
             var promise;
-            if (typeof context !== _undefined) {
-                var catchReject = typeof reject !== _function ? reject : function (reason) {
-                    return reject.call(context, reason);
-                };
-                promise = this.promise.catch(catchReject);
+            if (typeof reject === _function) {
+                promise = this.promise.catch(function(reason) {
+                    var result = reject.call(context, reason);
+                    return _isPromiseX(result) ? result.promise : result;
+                });
             } else {
                 promise = this.promise.catch(reject);
             }
@@ -198,13 +199,15 @@
          * @param {Object} [context] Context for callback
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(proto, 'finally', function (callback, context) {
+        _defineProperty(proto, 'finally', function PromiseX_finally(callback, context) {
             var promise = this.promise.then(function (value) {
-                return _cast(callback.call(context)).then(function(finallyValue) {
+                var result = callback.call(context);
+                return _castPromise(result).then(function(finallyValue) {
                     return typeof finallyValue !== _undefined ? finallyValue : value;
                 });
             }, function (reason) {
-                return _cast(callback.call(context)).then(function(finallyValue) {
+                var result = callback.call(context);
+                return _castPromise(result).then(function(finallyValue) {
                     if (typeof finallyValue !== _undefined) {
                         return finallyValue;
                     }
@@ -226,7 +229,7 @@
          * @throws any exception that is catched from the Promise chain
          * @return {undefined}
          */
-        _defineProperty(proto, 'done', function (resolve, reject, context) {
+        _defineProperty(proto, 'done', function PromiseX_done(resolve, reject, context) {
             this.then(resolve, reject, context).catch(function (reason) {
                 _setImmediate(function () {
                     throw reason;
@@ -243,7 +246,7 @@
          * @param {Object} [context] Context for callback
          * @return {PromiseX} self
          */
-        _defineProperty(proto, 'nodeify', function (callback, context) {
+        _defineProperty(proto, 'nodeify', function PromiseX_nodeify(callback, context) {
             if (typeof callback !== _function) {
                 return this;
             }
@@ -268,7 +271,7 @@
          * @param {Number} ms Milliseconds
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(proto, 'delay', function (ms) {
+        _defineProperty(proto, 'delay', function PromiseX_delay(ms) {
             var promise = this.promise.then(function (value) {
                 return new _Promise(function (resolve) {
                     setTimeout(function () {
@@ -284,6 +287,21 @@
             });
             return new PromiseX(promise);
         });
+
+
+        _defineProperty(proto, 'cancelled', function PromiseX_cancelled(resolve, context) {
+            var thenResolve = typeof resolve !== _function ? resolve : function (value) {
+                if (_isCancelled(value)) {
+                    var result = resolve.call(context, value.reason);
+                    if (typeof result !== _undefined) {
+                        return result;
+                    }
+                }
+                return value;
+            };
+            var promise = this.promise.then(thenResolve);
+            return new PromiseX(promise);
+        });
         /**
          * standard, returns a resolved Promise with given value
          *
@@ -291,7 +309,7 @@
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'resolve', function (value) {
+        _defineProperty(PromiseX, 'resolve', function PromiseX_resolve(value) {
             if (value instanceof PromiseX) { // strange since resolve should always return a new promise that mimics any other promise, but this is native behaviour
                 return value;
             }
@@ -306,7 +324,7 @@
          * @param {*} [reason]
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'reject', function (reason) {
+        _defineProperty(PromiseX, 'reject', function PromiseX_reject(reason) {
             return new PromiseX(function (_, reject) {
                 reject(reason);
             });
@@ -326,10 +344,10 @@
          * @param {String} [reason]
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'timeout', function(promise, ms, reason) {
+        _defineProperty(PromiseX, 'timeout', function PromiseX_timeout(promise, ms, reason) {
             return new PromiseX(function(resolve, reject) {
                 setTimeout(function() {
-                    reject(new Error(reason || 'Timeout'));
+                    reject(new PromiseX.TimeoutError(reason || 'Timeout'));
                 }, ms);
                 promise.then(resolve, reject);
             });
@@ -343,7 +361,7 @@
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'delay', function (ms, value) {
+        _defineProperty(PromiseX, 'delay', function PromiseX_delay(ms, value) {
             return new PromiseX(function (resolve) {
                 setTimeout(function () {
                     resolve(value);
@@ -359,7 +377,7 @@
          * @memberOf PromiseX
          * @return {PromiseX} deferred
          */
-        _defineProperty(PromiseX, 'defer', function () {
+        _defineProperty(PromiseX, 'defer', function PromiseX_defer() {
             return new PromiseX();
         });
         /**
@@ -371,17 +389,12 @@
          * @param {*} value
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'cast', function (value) {
+        _defineProperty(PromiseX, 'cast', function PromiseX_cast(value) {
             if (value instanceof PromiseX) {
                 return value;
             } else if (typeof value === _undefined) {
                 value = _cast();
             }
-            //else if (value instanceof _Promise) {
-            //    return new PromiseX(value);
-            //} else {
-            //    return PromiseX.resolve(value);
-            //}
             return new PromiseX(value); // this way native promises are wrapped and other values are resolved
         });
         /**
@@ -394,9 +407,29 @@
          * @param {Array<Promise>} promises
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'all', function (promises) {
+        _defineProperty(PromiseX, 'all', function PromiseX_all(promises) {
             return new PromiseX(function (resolve, reject) {
-                _Promise.all(promises).then(resolve, reject);
+                if (typeof promises === _undefined || promises === null) {
+                    throw new TypeError('First argument needs to be an array of promises or values.');
+                }
+                var result = [];
+                var sequence = _cast();
+                function addResult(value) {
+                    if (_isCancelled(value)) {
+                        resolve(value);
+                    } else {
+                        result.push(value);
+                    }
+                }
+                _forEach(promises, function(promise) {
+                    promise = _castPromise(promise).catch(reject);
+                    sequence = sequence.then(function() {
+                        return promise.then(addResult);
+                    });
+                });
+                sequence.then(function() {
+                    resolve(result);
+                });
             });
         });
         /**
@@ -409,10 +442,7 @@
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'race', function (promises) {
-            //return new PromiseX(function(resolve, reject) {
-            //    _Promise.race(promises).then(resolve, reject);
-            //});
+        _defineProperty(PromiseX, 'race', function PromiseX_race(promises) {
             return new PromiseX(function (resolve, reject) {
                 if (typeof promises === _undefined || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
@@ -423,10 +453,10 @@
                         return resolve();
                     }
                     for (i = 0; i < n; i++) {
-                        _cast(promises[i]).then(resolve, reject);
+                        _castPromise(promises[i]).then(resolve, reject);
                     }
                 } else {
-                    resolve(promises);
+                    _castPromise(promises).then(resolve, reject);
                 }
             });
         });
@@ -440,7 +470,7 @@
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'every', function (promises) {
+        _defineProperty(PromiseX, 'every', function PromiseX_every(promises) {
             return new PromiseX(function (resolve) {
                 if (typeof promises === _undefined || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
@@ -450,19 +480,23 @@
                 if (count === 0) {
                     return resolve(result);
                 }
-                var done = function () {
+                function done() {
                     count--;
                     if (count === 0) {
                         resolve(result);
                     }
-                };
+                }
                 _forEach(promises, function (promise, index) { // if promises is no array forEach transforms it
                     promise = PromiseX.cast(promise);
-                    var next = function () {
-                        result[index] = promise;
-                        done();
-                    };
-                    promise.then(next, next);
+                    function next() {
+                        if (promise.status === PromiseX.RESOLVED && _isCancelled(promise.value)) {
+                            resolve(promise.value);
+                        } else {
+                            result[index] = promise;
+                            done();
+                        }
+                    }
+                    promise.promise.then(next, next);
                 });
             });
         });
@@ -474,7 +508,7 @@
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'any', function (promises) {
+        _defineProperty(PromiseX, 'any', function PromiseX_any(promises) {
             return new PromiseX(function (resolve, reject) {
                 if (typeof promises === _undefined || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
@@ -485,23 +519,18 @@
                     if (count === 0) {
                         return resolve();
                     }
-                    var success = function (value) {
-                        resolved = true;
+                    function onReject() {
                         count--;
-                        resolve(value);
-                    };
-                    var error = function () {
-                        count--;
-                        if (count === 0 && !resolved) {
+                        if (count === 0) {
                             reject(new Error('No promises resolved successfully.'));
                         }
-                    };
+                    }
                     var i, n;
                     for (i = 0, n = count; i < n; i++) {
-                        _cast(promises[i]).then(success, error);
+                        _castPromise(promises[i]).then(resolve, onReject);
                     }
                 } else {
-                    resolve(promises);
+                    _castPromise(promises).then(resolve, reject);
                 }
             });
         });
@@ -517,7 +546,7 @@
          * @param {Object} [context] Context for mapFunction
          * @return {Array<PromiseX>} promises
          */
-        _defineProperty(PromiseX, 'map', function (values, mapFunction, context) {
+        _defineProperty(PromiseX, 'map', function PromiseX_map(values, mapFunction, context) {
             if (typeof mapFunction !== _function) {
                 throw new TypeError('Map-function is no valid function');
             }
@@ -546,13 +575,13 @@
          * @param {Object} [context] Context for reduceFunction
          * @return {PromiseX} new PromiseX
          */
-        _defineProperty(PromiseX, 'reduce', function (values, reduceFunction, initialValue, context) {
+        _defineProperty(PromiseX, 'reduce', function PromiseX_reduce(values, reduceFunction, initialValue, context) {
             return new PromiseX(function(resolve, reject) {
                 if (typeof reduceFunction !== _function) {
                     throw new TypeError('Reduce-function is no valid function');
                 }
                 var length = _isArray(values) ? values.length : 1;
-                var sequence = _Promise.resolve(initialValue);
+                var sequence = PromiseX.cast(initialValue); // use PromiseX here to use cancel in chain
                 _forEach(values, function (value, index) { // if values is no array forEach transforms it
                     sequence = sequence.then(function(result) {
                         return reduceFunction.call(context, result, value, index, length, values);
@@ -560,6 +589,12 @@
                 });
                 sequence.then(resolve, reject);
             });
+        });
+
+
+        _defineProperty(PromiseX, 'cancel', function PromiseX_cancel(reason) {
+            var error = new CancelledPromiseX(reason);
+            return new PromiseX(error);
         });
         /**
          * non-standard
@@ -572,7 +607,7 @@
          * @param {*} [value]
          * @return {boolean|*} Success state or requested config option
          */
-        _defineProperty(PromiseX, 'config', function (option, value) {
+        _defineProperty(PromiseX, 'config', function PromiseX_config(option, value) {
             if (option === 'getPromise') {
                 return _Promise;
             }
@@ -594,11 +629,59 @@
             return false;
         });
 
+        _defineProperty(PromiseX, 'CancellationError', function PromiseX_CancellationError(reason) {
+            if (!(this instanceof PromiseX.CancellationError)) {
+                return new PromiseX.CancellationError(reason);
+            }
+            _initError(this, PromiseX.CancellationError, reason);
+        });
+
+        _defineProperty(PromiseX, 'TimeoutError', function PromiseX_TimeoutError(reason) {
+            if (!(this instanceof PromiseX.TimeoutError)) {
+                return new PromiseX.TimeoutError(reason);
+            }
+            _initError(this, PromiseX.TimeoutError, reason);
+        });
+
+        function _initError(that, type, reason) {
+            if (typeof reason !== _undefined) {
+                _defineProperty(that, 'reason', reason);
+            }
+            if ('captureStackTrace' in Error) {
+                Error.captureStackTrace(that, type);
+            } else {
+                var error = new Error(reason);
+                if (_definePropertyOldSchool) {
+                    this.stack = error.stack;
+                } else {
+                    Object.defineProperty(that, 'stack', {
+                        set: function(value) {
+                            error.stack = value;
+                            return error.stack;
+                        },
+                        get: function() {
+                            return error.stack;
+                        },
+                        enumerable: false,
+                        configurable: true
+                    });
+                }
+            }
+        }
+
         function _cast(value) {
             if (value instanceof _Promise) {
                 return value;
             }
             return _Promise.resolve(value);
+        }
+
+        function _castPromise(value) {
+            return _isPromiseX(value) ? value.promise : _cast(value);
+        }
+
+        function _isPromiseX(value) {
+            return value instanceof PromiseX;
         }
 
         function _supportsPromise(promise) {
@@ -617,12 +700,22 @@
         return PromiseX;
     }
 
+    function CancelledPromiseX(reason) {
+        if (typeof reason !== _undefined) {
+            _defineProperty(this, 'reason', reason);
+        }
+    }
+
+    function _isCancelled(value) {
+        return value instanceof CancelledPromiseX;
+    }
+
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
     function _forEach(array, callback, context) {
         if (_isArray(array) === false) {
             array = [array];
         }
-        if (Array.prototype.forEach) {
+        if (typeof Array.prototype.forEach === _function) {
             return array.forEach(callback, context);
         }
         var i, n;
@@ -636,7 +729,11 @@
         if (Array.isArray) {
             return Array.isArray(array);
         }
-        return Object.prototype.toString.call(array) === '[object Array]';
+        return _type(array) === 'array';
+    }
+
+    function _type(object) {
+        return Object.prototype.toString.call(object).replace(/^\[object (.+)\]$/, '$1').toLowerCase();
     }
 
     var PromiseX = _definePromiseX();
