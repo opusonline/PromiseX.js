@@ -287,8 +287,17 @@
             });
             return new PromiseX(promise);
         });
-
-
+        /**
+         * non-standard
+         * cancelled promise chain can be catched here
+         * resolve method gets reason as parameter
+         * influence continuing by return a value of throw; returning nothing means continue cancelling
+         *
+         * @memberOf PromiseX#
+         * @param {function} resolve
+         * @param {Object} [context]
+         * @return {PromiseX} new PromiseX
+         */
         _defineProperty(proto, 'cancelled', function PromiseX_cancelled(resolve, context) {
             var thenResolve = !_isFunction(resolve) ? resolve : function (value) {
                 if (_isCancelled(value)) {
@@ -408,6 +417,7 @@
          * returns a Promise that is resolved only if all promises are resolved
          * or rejected if any promise of list is rejected
          * resolve function gets array of promise values
+         * following promises can be cancelled if any promise returns a cancel promise
          *
          * @memberOf PromiseX
          * @static
@@ -445,7 +455,7 @@
          * standard
          * returns a Promise that is resolved as soon as one promise is resolved
          * or rejected as soon as one promise of list is rejected
-         * _heads-up:_ native function is commented since some checks are missing
+         * following promises can be cancelled if any promise returns a cancel promise
          *
          * @memberOf PromiseX
          * @static
@@ -475,6 +485,7 @@
          * is fulfilled only if all promises are fulfilled either resolved or rejected.
          * each promise's fulfillment state and value is provided in the propagated value array
          * as promise.value and promise.status
+         * following promises can be cancelled if any promise returns a cancel promise
          *
          * @memberOf PromiseX
          * @static
@@ -516,6 +527,7 @@
         /**
          * non-standard
          * is fulfilled as soon as any promise is resolved or all promises are rejected
+         * following promises can be cancelled if any promise returns a cancel promise
          *
          * @memberOf PromiseX
          * @static
@@ -607,8 +619,16 @@
                 sequence.then(resolve, reject);
             });
         });
-
-
+        /**
+         * non-standard
+         * returning PromiseX.cancel(reason) will cancel the whole following promise chain
+         * cancel can be caught on PromiseX#cancelled(reason) method within a chain
+         *
+         * @memberOf PromiseX
+         * @static
+         * @param {*} reason Can be anything, even objects
+         * @return {PromiseX} new PromiseX with special Cancel value
+         */
         _defineProperty(PromiseX, 'cancel', function PromiseX_cancel(reason) {
             var error = new CancelledPromiseX(reason);
             return new PromiseX(error);
