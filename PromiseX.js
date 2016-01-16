@@ -19,7 +19,7 @@
     var _definePropertyOldSchool = false;
     try {
         Object.defineProperty({}, 'x', {});
-        _defineProperty = function _defineProperty(object, name, value) {
+        _defineProperty = function defineProperty(object, name, value) {
             return Object.defineProperty(object, name, {
                 value: value,
                 writable: true,
@@ -29,7 +29,7 @@
         };
     } catch (e) {
         _definePropertyOldSchool = true;
-        _defineProperty = function _defineProperty(object, name, value) {
+        _defineProperty = function defineProperty(object, name, value) {
             object[name] = value;
             return object;
         };
@@ -53,10 +53,10 @@
          * @param {Object} [context] Context for executor
          */
         function PromiseX(executor, context) {
-            if (!(this instanceof PromiseX)) {
+            if (!_isPromiseX(this)) {
                 throw new TypeError('Failed to construct \'PromiseX\': Please use the \'new\' operator, this object constructor cannot be called as a function.');
             }
-            if (executor instanceof PromiseX) {
+            if (_isPromiseX(executor)) {
                 return executor;
             }
             var self = this;
@@ -74,7 +74,7 @@
                 });
                 return this;
             }
-            if (typeof executor === _undefined) { // return "non-standard" deferred (w/o this.promise = PromiseX since this.promise used for native promise)
+            if (_isUndefined(executor)) { // return "non-standard" deferred (w/o this.promise = PromiseX since this.promise used for native promise)
                 this.resolve = null;
                 this.reject = null;
                 executor = function (resolve, reject, promise) {
@@ -88,8 +88,8 @@
                     };
                 };
             }
-            if (typeof executor === _function) {
-                if (typeof context === _undefined) {
+            if (_isFunction(executor)) {
+                if (_isUndefined(context)) {
                     context = self;
                 }
                 this.promise = new _Promise(function (resolve, reject) {
@@ -148,14 +148,14 @@
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'then', function PromiseX_then(resolve, reject, context) {
-            var thenResolve = typeof resolve !== _function ? resolve : function (value) {
+            var thenResolve = !_isFunction(resolve) ? resolve : function (value) {
                 if (_isCancelled(value)) {
                     return value;
                 }
                 var result = resolve.call(context, value);
                 return _isPromiseX(result) ? result.promise : result;
             };
-            var thenReject = typeof reject !== _function ? reject : function (reason) {
+            var thenReject = !_isFunction(reject) ? reject : function (reason) {
                 var result = reject.call(context, reason);
                 return _isPromiseX(result) ? result.promise : result;
             };
@@ -175,8 +175,8 @@
          */
         _defineProperty(proto, 'catch', function PromiseX_catch(reject, context) {
             var promise;
-            if (typeof reject === _function) {
-                promise = this.promise.catch(function(reason) {
+            if (_isFunction(reject)) {
+                promise = this.promise.catch(function (reason) {
                     var result = reject.call(context, reason);
                     return _isPromiseX(result) ? result.promise : result;
                 });
@@ -202,13 +202,13 @@
         _defineProperty(proto, 'finally', function PromiseX_finally(callback, context) {
             var promise = this.promise.then(function (value) {
                 var result = callback.call(context);
-                return _castPromise(result).then(function(finallyValue) {
-                    return typeof finallyValue !== _undefined ? finallyValue : value;
+                return _castPromise(result).then(function (finallyValue) {
+                    return !_isUndefined(finallyValue) ? finallyValue : value;
                 });
             }, function (reason) {
                 var result = callback.call(context);
-                return _castPromise(result).then(function(finallyValue) {
-                    if (typeof finallyValue !== _undefined) {
+                return _castPromise(result).then(function (finallyValue) {
+                    if (!_isUndefined(finallyValue)) {
                         return finallyValue;
                     }
                     throw reason;
@@ -247,7 +247,7 @@
          * @return {PromiseX} self
          */
         _defineProperty(proto, 'nodeify', function PromiseX_nodeify(callback, context) {
-            if (typeof callback !== _function) {
+            if (!_isFunction(callback)) {
                 return this;
             }
             this.promise.then(function (value) {
@@ -290,11 +290,11 @@
 
 
         _defineProperty(proto, 'cancelled', function PromiseX_cancelled(resolve, context) {
-            var thenResolve = typeof resolve !== _function ? resolve : function (value) {
+            var thenResolve = !_isFunction(resolve) ? resolve : function (value) {
                 if (_isCancelled(value)) {
                     var result = resolve.call(context, value.reason);
-                    if (typeof result !== _undefined) {
-                        return result;
+                    if (!_isUndefined(result)) {
+                        return _isPromiseX(result) ? result.promise : result;
                     }
                 }
                 return value;
@@ -306,11 +306,12 @@
          * standard, returns a resolved Promise with given value
          *
          * @memberOf PromiseX
+         * @static
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'resolve', function PromiseX_resolve(value) {
-            if (value instanceof PromiseX) { // strange since resolve should always return a new promise that mimics any other promise, but this is native behaviour
+            if (_isPromiseX(value)) { // strange since resolve should always return a new promise that mimics any other promise, but this is native behaviour
                 return value;
             }
             return new PromiseX(function (resolve) {
@@ -321,6 +322,7 @@
          * standard, returns a rejected Promise with given reason
          *
          * @memberOf PromiseX
+         * @static
          * @param {*} [reason]
          * @return {PromiseX} new PromiseX
          */
@@ -339,14 +341,15 @@
          * since setTimeout starts immediately when calling and not when promise starts
          *
          * @memberOf PromiseX
+         * @static
          * @param {Promise} promise
          * @param {Number} ms Milliseconds
          * @param {String} [reason]
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'timeout', function PromiseX_timeout(promise, ms, reason) {
-            return new PromiseX(function(resolve, reject) {
-                setTimeout(function() {
+            return new PromiseX(function (resolve, reject) {
+                setTimeout(function () {
                     reject(new PromiseX.TimeoutError(reason || 'Timeout'));
                 }, ms);
                 promise.then(resolve, reject);
@@ -357,6 +360,7 @@
          * returns a resolved Promise with given value after certain amount of time
          *
          * @memberOf PromiseX
+         * @static
          * @param {Number} ms Milliseconds
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
@@ -375,6 +379,7 @@
          * {@link https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred}
          *
          * @memberOf PromiseX
+         * @static
          * @return {PromiseX} deferred
          */
         _defineProperty(PromiseX, 'defer', function PromiseX_defer() {
@@ -386,13 +391,14 @@
          * {@link http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony}
          *
          * @memberOf PromiseX
+         * @static
          * @param {*} value
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'cast', function PromiseX_cast(value) {
-            if (value instanceof PromiseX) {
+            if (_isPromiseX(value)) {
                 return value;
-            } else if (typeof value === _undefined) {
+            } else if (_isUndefined(value)) {
                 value = _cast();
             }
             return new PromiseX(value); // this way native promises are wrapped and other values are resolved
@@ -404,16 +410,18 @@
          * resolve function gets array of promise values
          *
          * @memberOf PromiseX
+         * @static
          * @param {Array<Promise>} promises
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'all', function PromiseX_all(promises) {
             return new PromiseX(function (resolve, reject) {
-                if (typeof promises === _undefined || promises === null) {
+                if (_isUndefined(promises) || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 var result = [];
                 var sequence = _cast();
+
                 function addResult(value) {
                     if (_isCancelled(value)) {
                         resolve(value);
@@ -421,13 +429,14 @@
                         result.push(value);
                     }
                 }
-                _forEach(promises, function(promise) {
+
+                _forEach(promises, function (promise) {
                     promise = _castPromise(promise).catch(reject);
-                    sequence = sequence.then(function() {
+                    sequence = sequence.then(function () {
                         return promise.then(addResult);
                     });
                 });
-                sequence.then(function() {
+                sequence.then(function () {
                     resolve(result);
                 });
             });
@@ -439,12 +448,13 @@
          * _heads-up:_ native function is commented since some checks are missing
          *
          * @memberOf PromiseX
+         * @static
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'race', function PromiseX_race(promises) {
             return new PromiseX(function (resolve, reject) {
-                if (typeof promises === _undefined || promises === null) {
+                if (_isUndefined(promises) || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 if (_isArray(promises)) {
@@ -467,12 +477,13 @@
          * as promise.value and promise.status
          *
          * @memberOf PromiseX
+         * @static
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'every', function PromiseX_every(promises) {
             return new PromiseX(function (resolve) {
-                if (typeof promises === _undefined || promises === null) {
+                if (_isUndefined(promises) || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 var count = _isArray(promises) ? promises.length : 1;
@@ -486,6 +497,7 @@
                         resolve(result);
                     }
                 }
+
                 _forEach(promises, function (promise, index) { // if promises is no array forEach transforms it
                     promise = PromiseX.cast(promise);
                     function next() {
@@ -496,6 +508,7 @@
                             done();
                         }
                     }
+
                     promise.promise.then(next, next);
                 });
             });
@@ -505,12 +518,13 @@
          * is fulfilled as soon as any promise is resolved or all promises are rejected
          *
          * @memberOf PromiseX
+         * @static
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'any', function PromiseX_any(promises) {
             return new PromiseX(function (resolve, reject) {
-                if (typeof promises === _undefined || promises === null) {
+                if (_isUndefined(promises) || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 if (_isArray(promises)) {
@@ -525,6 +539,7 @@
                             reject(new Error('No promises resolved successfully.'));
                         }
                     }
+
                     var i, n;
                     for (i = 0, n = count; i < n; i++) {
                         _castPromise(promises[i]).then(resolve, onReject);
@@ -541,13 +556,14 @@
          * _heads-up:_ take care of errors; invalid input throws
          *
          * @memberOf PromiseX
+         * @static
          * @param {Array<*>} values Array of values
          * @param {function} mapFunction Called as mapper(current, index, length, values)
          * @param {Object} [context] Context for mapFunction
          * @return {Array<PromiseX>} promises
          */
         _defineProperty(PromiseX, 'map', function PromiseX_map(values, mapFunction, context) {
-            if (typeof mapFunction !== _function) {
+            if (!_isFunction(mapFunction)) {
                 throw new TypeError('Map-function is no valid function');
             }
             if (_isArray(values) === false) {
@@ -569,6 +585,7 @@
          * or slightly different here [promise-reduce]{@link https://github.com/yoshuawuyts/promise-reduce}
          *
          * @memberOf PromiseX
+         * @static
          * @param {Array<*|Promise>} values Array of promises or values
          * @param {function} reduceFunction Called as reducer(previous, current, index, length, values) previous is initialValue or undefined
          * @param {*} [initialValue]
@@ -576,14 +593,14 @@
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(PromiseX, 'reduce', function PromiseX_reduce(values, reduceFunction, initialValue, context) {
-            return new PromiseX(function(resolve, reject) {
-                if (typeof reduceFunction !== _function) {
+            return new PromiseX(function (resolve, reject) {
+                if (!_isFunction(reduceFunction)) {
                     throw new TypeError('Reduce-function is no valid function');
                 }
                 var length = _isArray(values) ? values.length : 1;
                 var sequence = PromiseX.cast(initialValue); // use PromiseX here to use cancel in chain
                 _forEach(values, function (value, index) { // if values is no array forEach transforms it
-                    sequence = sequence.then(function(result) {
+                    sequence = sequence.then(function (result) {
                         return reduceFunction.call(context, result, value, index, length, values);
                     });
                 });
@@ -603,6 +620,7 @@
          * 'createPromise' creates a new separate PromiseX instance with a given underlying promise
          *
          * @memberOf PromiseX
+         * @static
          * @param {String} option
          * @param {*} [value]
          * @return {boolean|*} Success state or requested config option
@@ -611,16 +629,16 @@
             if (option === 'getPromise') {
                 return _Promise;
             }
-            if (option === 'setPromise' && typeof value !== _undefined) {
+            if (option === 'setPromise' && !_isUndefined(value)) {
                 if (_supportsPromise(value) === false) {
-                    throw new TypeError(' Invalid Promise: ' + value.toString());
+                    throw new TypeError(' Invalid Promise: ' + value);
                 }
                 _Promise = value;
                 return true;
             }
-            if (option === 'createPromise' && typeof value !== _undefined) {
+            if (option === 'createPromise' && !_isUndefined(value)) {
                 if (_supportsPromise(value) === false) {
-                    throw new TypeError(' Invalid Promise: ' + value.toString());
+                    throw new TypeError(' Invalid Promise: ' + value);
                 }
                 var newPromise = _definePromiseX();
                 newPromise.config('setPromise', value);
@@ -629,37 +647,39 @@
             return false;
         });
 
-        _defineProperty(PromiseX, 'CancellationError', function PromiseX_CancellationError(reason) {
+        _defineProperty(PromiseX, 'CancellationError', function PromiseX_CancellationError(message) {
             if (!(this instanceof PromiseX.CancellationError)) {
-                return new PromiseX.CancellationError(reason);
+                return new PromiseX.CancellationError(message);
             }
-            _initError(this, PromiseX.CancellationError, reason);
+            _initError(this, PromiseX.CancellationError, message);
         });
+        _defineProperty(PromiseX.CancellationError.prototype, 'message', '');
 
-        _defineProperty(PromiseX, 'TimeoutError', function PromiseX_TimeoutError(reason) {
+        _defineProperty(PromiseX, 'TimeoutError', function PromiseX_TimeoutError(message) {
             if (!(this instanceof PromiseX.TimeoutError)) {
-                return new PromiseX.TimeoutError(reason);
+                return new PromiseX.TimeoutError(message);
             }
-            _initError(this, PromiseX.TimeoutError, reason);
+            _initError(this, PromiseX.TimeoutError, message);
         });
+        _defineProperty(PromiseX.TimeoutError.prototype, 'message', '');
 
-        function _initError(that, type, reason) {
-            if (typeof reason !== _undefined) {
-                _defineProperty(that, 'reason', reason);
+        function _initError(that, type, message) {
+            if (!_isUndefined(message)) {
+                _defineProperty(that, 'message', '' + message);
             }
             if ('captureStackTrace' in Error) {
                 Error.captureStackTrace(that, type);
             } else {
-                var error = new Error(reason);
+                var error = new Error(message);
                 if (_definePropertyOldSchool) {
                     this.stack = error.stack;
                 } else {
                     Object.defineProperty(that, 'stack', {
-                        set: function(value) {
+                        set: function (value) {
                             error.stack = value;
                             return error.stack;
                         },
-                        get: function() {
+                        get: function () {
                             return error.stack;
                         },
                         enumerable: false,
@@ -685,7 +705,7 @@
         }
 
         function _supportsPromise(promise) {
-            if (typeof promise === _undefined) {
+            if (_isUndefined(promise)) {
                 promise = _Promise;
             }
             try {
@@ -701,7 +721,7 @@
     }
 
     function CancelledPromiseX(reason) {
-        if (typeof reason !== _undefined) {
+        if (!_isUndefined(reason)) {
             _defineProperty(this, 'reason', reason);
         }
     }
@@ -726,14 +746,20 @@
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
     function _isArray(array) {
-        if (Array.isArray) {
+        if (typeof Array.isArray === _function) {
             return Array.isArray(array);
         }
-        return _type(array) === 'array';
+        return Object.prototype.toString.call(array) === '[object Array]';
     }
 
-    function _type(object) {
-        return Object.prototype.toString.call(object).replace(/^\[object (.+)\]$/, '$1').toLowerCase();
+    function _isFunction(func) {
+        return typeof func === _function;
+    }
+
+    // faster than typeof; should only be called for testing known variables
+    // http://www.2ality.com/2013/04/check-undefined.html
+    function _isUndefined(value) {
+        return value === undefined;
     }
 
     var PromiseX = _definePromiseX();
