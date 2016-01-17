@@ -35,7 +35,6 @@
         };
     }
 
-    var _undefined = 'undefined';
     var _function = 'function';
 
     function _definePromiseX() {
@@ -62,6 +61,7 @@
             var self = this;
             this.status = PromiseX.PENDING;
             this.value = undefined;
+            _checkUndefinedPromise();
             if (executor instanceof _Promise) {
                 this.promise = executor.then(function (value) {
                     self.status = PromiseX.RESOLVED;
@@ -74,7 +74,7 @@
                 });
                 return this;
             }
-            if (_isUndefined(executor)) { // return "non-standard" deferred (w/o this.promise = PromiseX since this.promise used for native promise)
+            if (executor === undefined) { // return "non-standard" deferred (w/o this.promise = PromiseX since this.promise used for native promise)
                 this.resolve = null;
                 this.reject = null;
                 executor = function (resolve, reject, promise) {
@@ -89,7 +89,7 @@
                 };
             }
             if (_isFunction(executor)) {
-                if (_isUndefined(context)) {
+                if (context === undefined) {
                     context = self;
                 }
                 this.promise = new _Promise(function (resolve, reject) {
@@ -203,12 +203,12 @@
             var promise = this.promise.then(function (value) {
                 var result = callback.call(context);
                 return _castPromise(result).then(function (finallyValue) {
-                    return !_isUndefined(finallyValue) ? finallyValue : value;
+                    return finallyValue !== undefined ? finallyValue : value;
                 });
             }, function (reason) {
                 var result = callback.call(context);
                 return _castPromise(result).then(function (finallyValue) {
-                    if (!_isUndefined(finallyValue)) {
+                    if (finallyValue !== undefined) {
                         return finallyValue;
                     }
                     throw reason;
@@ -302,7 +302,7 @@
             var thenResolve = !_isFunction(resolve) ? resolve : function (value) {
                 if (_isCancelled(value)) {
                     var result = resolve.call(context, value.reason);
-                    if (!_isUndefined(result)) {
+                    if (result !== undefined) {
                         return _isPromiseX(result) ? result.promise : result;
                     }
                 }
@@ -407,7 +407,8 @@
         _defineProperty(PromiseX, 'cast', function PromiseX_cast(value) {
             if (_isPromiseX(value)) {
                 return value;
-            } else if (_isUndefined(value)) {
+            } else if (value === undefined) {
+                _checkUndefinedPromise();
                 value = _cast();
             }
             return new PromiseX(value); // this way native promises are wrapped and other values are resolved
@@ -426,7 +427,7 @@
          */
         _defineProperty(PromiseX, 'all', function PromiseX_all(promises) {
             return new PromiseX(function (resolve, reject) {
-                if (_isUndefined(promises) || promises === null) {
+                if (promises === undefined || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 var result = [];
@@ -464,7 +465,7 @@
          */
         _defineProperty(PromiseX, 'race', function PromiseX_race(promises) {
             return new PromiseX(function (resolve, reject) {
-                if (_isUndefined(promises) || promises === null) {
+                if (promises === undefined || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 if (_isArray(promises)) {
@@ -494,7 +495,7 @@
          */
         _defineProperty(PromiseX, 'every', function PromiseX_every(promises) {
             return new PromiseX(function (resolve) {
-                if (_isUndefined(promises) || promises === null) {
+                if (promises === undefined || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 var count = _isArray(promises) ? promises.length : 1;
@@ -536,11 +537,10 @@
          */
         _defineProperty(PromiseX, 'any', function PromiseX_any(promises) {
             return new PromiseX(function (resolve, reject) {
-                if (_isUndefined(promises) || promises === null) {
+                if (promises === undefined || promises === null) {
                     throw new TypeError('First argument needs to be an array of promises or values.');
                 }
                 if (_isArray(promises)) {
-                    var resolved = false;
                     var count = promises.length;
                     if (count === 0) {
                         return resolve();
@@ -610,10 +610,14 @@
                     throw new TypeError('Reduce-function is no valid function');
                 }
                 var length = _isArray(values) ? values.length : 1;
-                var sequence = PromiseX.cast(initialValue); // use PromiseX here to use cancel in chain
+                var sequence = _castPromise(initialValue);
                 _forEach(values, function (value, index) { // if values is no array forEach transforms it
                     sequence = sequence.then(function (result) {
-                        return reduceFunction.call(context, result, value, index, length, values);
+                        if (_isCancelled(result)) {
+                            return result;
+                        }
+                        var reduced = reduceFunction.call(context, result, value, index, length, values);
+                        return _isPromiseX(reduced) ? reduced.promise : reduced;
                     });
                 });
                 sequence.then(resolve, reject);
@@ -649,15 +653,15 @@
             if (option === 'getPromise') {
                 return _Promise;
             }
-            if (option === 'setPromise' && !_isUndefined(value)) {
-                if (_supportsPromise(value) === false) {
+            if (option === 'setPromise' && value !== undefined) {
+                if (!_supportsPromise(value)) {
                     throw new TypeError(' Invalid Promise: ' + value);
                 }
                 _Promise = value;
                 return true;
             }
-            if (option === 'createPromise' && !_isUndefined(value)) {
-                if (_supportsPromise(value) === false) {
+            if (option === 'createPromise' && value !== undefined) {
+                if (!_supportsPromise(value)) {
                     throw new TypeError(' Invalid Promise: ' + value);
                 }
                 var newPromise = _definePromiseX();
@@ -684,7 +688,7 @@
         _defineProperty(PromiseX.TimeoutError.prototype, 'message', '');
 
         function _initError(that, type, message) {
-            if (!_isUndefined(message)) {
+            if (message !== undefined) {
                 _defineProperty(that, 'message', '' + message);
             }
             if ('captureStackTrace' in Error) {
@@ -725,7 +729,7 @@
         }
 
         function _supportsPromise(promise) {
-            if (_isUndefined(promise)) {
+            if (promise === undefined) {
                 promise = _Promise;
             }
             try {
@@ -737,11 +741,17 @@
             return false;
         }
 
+        function _checkUndefinedPromise() {
+            if (_Promise === undefined) {
+                throw new TypeError('Base Promise needed but is undefined. Use PromiseX.config("setPromise", whateverPromise) or "createPromise".');
+            }
+        }
+
         return PromiseX;
     }
 
     function CancelledPromiseX(reason) {
-        if (!_isUndefined(reason)) {
+        if (reason !== undefined) {
             _defineProperty(this, 'reason', reason);
         }
     }
@@ -776,19 +786,13 @@
         return typeof func === _function;
     }
 
-    // faster than typeof; should only be called for testing known variables
-    // http://www.2ality.com/2013/04/check-undefined.html
-    function _isUndefined(value) {
-        return value === undefined;
-    }
-
     var PromiseX = _definePromiseX();
 
     if (typeof define === _function && define.amd) {
         define(function () {
             return PromiseX;
         });
-    } else if (typeof module !== _undefined) {
+    } else if (typeof module !== 'undefined') {
         module.exports = PromiseX;
     } else {
         global.PromiseX = PromiseX;
