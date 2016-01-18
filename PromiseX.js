@@ -40,6 +40,7 @@
     function _definePromiseX() {
 
         var _Promise = global.Promise;
+        var _validBasePromise = true;
 
         /**
          * executor should be the execution function called with optional context,
@@ -670,7 +671,17 @@
             }
             return false;
         });
-
+        /**
+         /**
+         * static error on PromiseX
+         * can be used to throw special error and check with 'instanceof'
+         * provides message and even error like stack
+         *
+         * @memberOf PromiseX
+         * @static
+         * @param {String} message
+         * @return {PromiseX.CancellationError}
+         */
         _defineProperty(PromiseX, 'CancellationError', function PromiseX_CancellationError(message) {
             if (!(this instanceof PromiseX.CancellationError)) {
                 return new PromiseX.CancellationError(message);
@@ -678,7 +689,16 @@
             _initError(this, PromiseX.CancellationError, message);
         });
         _defineProperty(PromiseX.CancellationError.prototype, 'message', '');
-
+        /**
+         * static error on PromiseX
+         * can be used to throw special error and check with 'instanceof'
+         * provides message and even error like stack
+         *
+         * @memberOf PromiseX
+         * @static
+         * @param {String} message Everything casted to string
+         * @return {PromiseX.TimeoutError}
+         */
         _defineProperty(PromiseX, 'TimeoutError', function PromiseX_TimeoutError(message) {
             if (!(this instanceof PromiseX.TimeoutError)) {
                 return new PromiseX.TimeoutError(message);
@@ -742,10 +762,12 @@
         }
 
         function _checkUndefinedPromise() {
-            if (_Promise === undefined) {
+            if (!_validBasePromise) {
                 throw new TypeError('Base Promise needed but is undefined. Use PromiseX.config("setPromise", whateverPromise) or "createPromise".');
             }
         }
+
+        _validBasePromise = _supportsPromise();
 
         return PromiseX;
     }
