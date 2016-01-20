@@ -9,11 +9,16 @@
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
-(function (global, undefined) {
+(function (root, undefined) {
+    'use strict';
 
-    var _setImmediate = global.setImmediate || function (callback) {
-            return setTimeout(callback, 0);
-        };
+    var _global = typeof global === 'object' && global !== root.global ? global : root; // in node: root == {}
+
+    var _function = 'function';
+
+    var _setImmediate = typeof _global.setImmediate === _function ? _global.setImmediate : function (callback) {
+        return setTimeout(callback, 0);
+    };
 
     var _defineProperty;
     var _definePropertyOldSchool = false;
@@ -35,12 +40,10 @@
         };
     }
 
-    var _function = 'function';
-
     function _definePromiseX() {
 
-        var _Promise = global.Promise;
-        var _validBasePromise = true;
+        var _Promise = _global.Promise;
+        var _validBasePromise = _supportsPromise();
 
         /**
          * executor should be the execution function called with optional context,
@@ -99,6 +102,7 @@
                             if (self.status !== PromiseX.PENDING) {
                                 return;
                             }
+                            _checkSelfReference(self, value);
                             self.status = PromiseX.RESOLVED;
                             self.value = value;
                             resolve(value);
@@ -106,6 +110,7 @@
                             if (self.status !== PromiseX.PENDING) {
                                 return;
                             }
+                            _checkSelfReference(self, reason);
                             self.status = PromiseX.REJECTED;
                             self.value = reason;
                             reject(reason);
@@ -149,19 +154,23 @@
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'then', function PromiseX_then(resolve, reject, context) {
+            var promiseX, promise;
             var thenResolve = !_isFunction(resolve) ? resolve : function (value) {
                 if (_isCancelled(value)) {
                     return value;
                 }
                 var result = resolve.call(context, value);
+                _checkSelfReference(promiseX, result);
                 return _isPromiseX(result) ? result.promise : result;
             };
             var thenReject = !_isFunction(reject) ? reject : function (reason) {
                 var result = reject.call(context, reason);
+                _checkSelfReference(promiseX, result);
                 return _isPromiseX(result) ? result.promise : result;
             };
-            var promise = this.promise.then(thenResolve, thenReject);
-            return new PromiseX(promise);
+            promise = this.promise.then(thenResolve, thenReject);
+            promiseX = new PromiseX(promise);
+            return promiseX;
         });
         /**
          * just like standard Promise.catch, always returns a new Promise
@@ -175,16 +184,18 @@
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'catch', function PromiseX_catch(reject, context) {
-            var promise;
+            var promiseX, promise;
             if (_isFunction(reject)) {
                 promise = this.promise.catch(function (reason) {
                     var result = reject.call(context, reason);
+                    _checkSelfReference(promiseX, result);
                     return _isPromiseX(result) ? result.promise : result;
                 });
             } else {
                 promise = this.promise.catch(reject);
             }
-            return new PromiseX(promise);
+            promiseX = new PromiseX(promise);
+            return promiseX;
         });
         /**
          * non-standard, always returns a new Promise
@@ -201,13 +212,16 @@
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'finally', function PromiseX_finally(callback, context) {
+            var promiseX;
             var promise = this.promise.then(function (value) {
                 var result = callback.call(context);
+                _checkSelfReference(promiseX, result);
                 return _castPromise(result).then(function (finallyValue) {
                     return finallyValue !== undefined ? finallyValue : value;
                 });
             }, function (reason) {
                 var result = callback.call(context);
+                _checkSelfReference(promiseX, result);
                 return _castPromise(result).then(function (finallyValue) {
                     if (finallyValue !== undefined) {
                         return finallyValue;
@@ -215,7 +229,8 @@
                     throw reason;
                 });
             });
-            return new PromiseX(promise);
+            promiseX = new PromiseX(promise);
+            return promiseX;
         });
         /**
          * non-standard
@@ -300,17 +315,20 @@
          * @return {PromiseX} new PromiseX
          */
         _defineProperty(proto, 'cancelled', function PromiseX_cancelled(resolve, context) {
+            var promiseX;
             var thenResolve = !_isFunction(resolve) ? resolve : function (value) {
                 if (_isCancelled(value)) {
                     var result = resolve.call(context, value.reason);
                     if (result !== undefined) {
+                        _checkSelfReference(promiseX, result);
                         return _isPromiseX(result) ? result.promise : result;
                     }
                 }
                 return value;
             };
             var promise = this.promise.then(thenResolve);
-            return new PromiseX(promise);
+            promiseX = new PromiseX(promise);
+            return promiseX;
         });
         /**
          * standard, returns a resolved Promise with given value
@@ -546,12 +564,12 @@
                     if (count === 0) {
                         return resolve();
                     }
-                    function onReject() {
+                    var onReject = function onReject() {
                         count--;
                         if (count === 0) {
                             reject(new Error('No promises resolved successfully.'));
                         }
-                    }
+                    };
 
                     var i, n;
                     for (i = 0, n = count; i < n; i++) {
@@ -767,8 +785,6 @@
             }
         }
 
-        _validBasePromise = _supportsPromise();
-
         return PromiseX;
     }
 
@@ -780,6 +796,12 @@
 
     function _isCancelled(value) {
         return value instanceof CancelledPromiseX;
+    }
+
+    function _checkSelfReference(instance, value) {
+        if (instance === value) {
+            throw new TypeError('Attempt to resolve promise with self');
+        }
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
@@ -810,14 +832,14 @@
 
     var PromiseX = _definePromiseX();
 
-    if (typeof define === _function && define.amd) {
-        define(function () {
+    if (typeof _global.define === _function && _global.define.amd) {
+        _global.define([], function () {
             return PromiseX;
         });
-    } else if (typeof module !== 'undefined') {
+    } else if (typeof module !== 'undefined' && root.module !== module) {
         module.exports = PromiseX;
     } else {
-        global.PromiseX = PromiseX;
+        _global.PromiseX = PromiseX;
     }
 
 })(this);
