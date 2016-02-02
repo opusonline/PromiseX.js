@@ -52,6 +52,49 @@
          * every other executor is treated as PromiseX.resolve(value)
          *
          * @class PromiseX
+         * @example
+         * // default use
+         * var promise = new PromiseX(function(resolve, reject) {
+         *     var async = doSomeAsyncStuff();
+         *     async.onready = resolve;
+         *     async.onerror = reject;
+         * });
+         *
+         * // extended
+         * var promise = new PromiseX(function(resolve, reject, self) {
+         *     var async = doSomeAsyncStuff();
+         *     async.onready = resolve;
+         *     async.onerror = reject;
+         *     self.cancel = function() {
+         *         reject(new Error('canceled'));
+         *     };
+         * });
+         * promise.cancel();
+         *
+         * // context
+         * var collection = {};
+         * collection.promise = new PromiseX(function(resolve) {
+         *     this.resolve = function(value) {
+         *         resolve(value);
+         *         return this.promise;
+         *     };
+         * }, collection);
+         * collection.resolve('resolved').then(…);
+         *
+         * // PromiseX.resolve(value)
+         * var promise = new PromiseX('resolved');
+         *
+         * // PromiseX.defer() including resolve/reject
+         * var promise = new PromiseX();
+         * promise.resolve('resolved');
+         *
+         * // PromiseX.cast() or PromiseX.resolve() for underlying promises
+         * var nativePromise = Promise.resolve('native');
+         * var promiseX = new PromiseX(nativePromise);
+         * promiseX.then(…);
+         *
+         * // status and value
+         * var promise = PromiseX.resolve('foo'); // promise.status == 'resolved'; promise.value == 'foo'
          * @param {undefined|function|*} [executor]
          * @param {Object} [context] Context for executor
          * @return {PromiseX} new PromiseX
