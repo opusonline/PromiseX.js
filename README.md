@@ -15,16 +15,16 @@ Javascript Promise Xtended - Wrapper to add new methods [w/o changing the native
  * public string constants for better readability
  * exposed `value` and `status` of each promise
  * nice methods like `finally`, `timeout`, `any` or `nodeify`
- * *cancellable promise chain* (partly or as long as you want)
+ * **cancellable promise chain** (partly or as long as you want)
  * create cancellable promises by adding public methods to a created Promise
  * change underlying promise at runtime - that way you don't need to redefine global promise
 
 # Promises/A+ Compliance
 
 `PromiseX` is NO plain Promise plugin, it is a _wrapper_ to extend basic functionality.  
-Per default, `PromiseX` uses the native Promise. If no Promise is present, an error is thrown.  
-Since [some implementations have even better performance than native promise](http://jsperf.com/promise-speed-comparison/8), 
-you can even choose the base promise for `PromiseX`. And even better, you can have multiple instances with different base promises!
+Per default, `PromiseX` uses the native Promise. If no promise is present, an error is thrown.  
+Since [some implementations have better performance than native promise](http://jsperf.com/promise-speed-comparison/8), 
+you can choose the base promise for `PromiseX`. And better, you can have multiple instances with different base promises!!!
 
 ```javascript
 PromiseX.config('getPromise') === window.Promise; // true
@@ -50,9 +50,9 @@ For example [Point 2.2.5](https://promisesaplus.com/#point-35) is true in genera
 
 ### new PromiseX([executor], [context]) => {PromiseX}
 
-executor should be the execution function called with optional context,  
-if executor is empty the promise is a deferred with resolve and reject functions,  
-if executor is a native promise the new object will be a wrapper for this promise  
+`executor` should be the execution function called with optional context,  
+if `executor` is empty the promise is a `deferred` with resolve and reject functions,  
+if `executor` is a native promise the new object will be a wrapper for this promise  
 every other executor is treated as PromiseX.resolve(value)
 
 ### Constants
@@ -126,7 +126,7 @@ non-standard, always returns a new Promise
 defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>  
 callback is executed with optional context when Promise is fulfilled  
 previous resolved/rejected values are propagated to next Promise  
-attention: this behaves exactly like try-catch-finally  
+__attention:___ this behaves exactly like try-catch-finally  
 <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block>  
 and is a bit different to others regarding the return value of finally callback
 
@@ -160,7 +160,7 @@ PromiseX.resolve('foo').finally(function() {
 ### PromiseX#done([resolve], [reject], [context]) => {undefined}
 
 non-standard  
-does *not* return a promise, throws outside promises on next tick  
+does **not** return a promise, throws outside promises on next tick  
 defined here: <https://www.promisejs.org/api/#Promise_prototype_done>  
 if resolve/reject is/are provided, a last Promise.then is executed with optional context
 
@@ -175,7 +175,7 @@ doAsync().done(doStuff);
 ### PromiseX#nodeify(callback, [context]) => {PromiseX}
 
 non-standard  
-transforms Promise to node-like callback - meaning: callback(error, value)  
+transforms Promise to node-like callback - meaning: `callback(error, value)`  
 defined here: <https://www.promisejs.org/api/#Promise_prototype_nodify>
 
 ```javascript
@@ -210,7 +210,8 @@ doAsync().delay(5000).then(function(value) {
 non-standard  
 cancelled promise chain can be catched here  
 resolve method gets reason as parameter  
-influence continuing by return a value of throw; returning nothing means continue cancelling
+influence continuing by returning a value or throw  
+return nothing (undefined) means continue cancelling
 
 ```javascript
 getJSON('data').catch(function(reason) {
@@ -236,7 +237,8 @@ getJSON('data').catch(function(reason) {
 
 ### PromiseX.resolve([value]) => {PromiseX}
 
-standard, returns a resolved Promise with given value
+standard, returns a resolved Promise with given value  
+_heads-up:_ if value is a `PromiseX`, value is returned
 
 ```javascript
 PromiseX.resolve('done');
@@ -311,7 +313,8 @@ doAsync().then(function(value) {
 non-standard  
 returns a deferred object including promise and  
 resolve and reject methods to fulfill the promise  
-<https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred>
+<https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred>  
+_attention:_ don't use deferred.promise; there is a `promise` property but only for internal use!
 
 ```javascript
 function doAsync() {
@@ -330,8 +333,9 @@ doAsync().then(…)
 
 ### PromiseX.cast(value) => {PromiseX}
 
-ensures to return a promise  
+ensures to return a `PromiseX` promise  
 if value is a promise, return that promise  
+different to PromiseX.resolve since `cast` transforms and `resolve` gives a resolved `PromiseX`  
 <http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony>
 
 ```javascript
@@ -375,6 +379,21 @@ returns a Promise that is resolved as soon as one promise is resolved
 or rejected as soon as one promise of list is rejected  
 following promises can be cancelled if any promise returns a cancel promise
 
+```javascript
+PromiseX.race([doAsync1(), doAsync2()]).then(function(value) {
+    // value could be resolved value from doAsync1 or doAsync2 deciding on faster one
+}).catch(function() {
+    // could be any error from doAsync1 or doAsync2
+});
+
+// nice for timeout
+PromiseX.race([doAsync(), PromiseX.delay(100).then(function(){
+    throw new Error('timeout');
+})]).catch(function(reason) {
+    // reason == doAsync error or timeout
+});
+```
+
 ### PromiseX.every(promises) => {PromiseX}
 
 non-standard  
@@ -416,10 +435,10 @@ PromiseX.any(requests).then(function(response) {
 });
 ```
 
-### PromiseX.map(values, mapFunction, [context]) => {Array<PromiseX>}
+### PromiseX.map(values, mapFunction, [context]) => {Array\<PromiseX>}
 
 non-standard  
-returns an array of PromiseX created from each value by the map function executed with optional context  
+returns an array of `PromiseX` created from each value by the map function executed with optional context  
 mapFunction is called as mapper(current, index, length, values)  
 _heads-up:_ take care of errors; invalid input throws
 

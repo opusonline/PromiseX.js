@@ -46,9 +46,9 @@
         var _validBasePromise = _supportsPromise();
 
         /**
-         * executor should be the execution function called with optional context,
-         * if executor is empty the promise is a deferred with resolve and reject functions,
-         * if executor is a native promise the new object will be a wrapper for this promise
+         * `executor` should be the execution function called with optional context,
+         * if `executor` is empty the promise is a `deferred` with resolve and reject functions,
+         * if `executor` is a native promise the new object will be a wrapper for this promise
          * every other executor is treated as PromiseX.resolve(value)
          *
          * @class PromiseX
@@ -253,7 +253,7 @@
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_finally}
          * callback is executed with optional context when Promise is fulfilled
          * previous resolved/rejected values are propagated to next Promise
-         * attention: this behaves exactly like try-catch-finally
+         * __attention:___ this behaves exactly like try-catch-finally
          * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block}
          * and is a bit different to others regarding the return value of finally callback
          *
@@ -310,7 +310,7 @@
         });
         /**
          * non-standard
-         * does *not* return a promise, throws outside promises on next tick
+         * does **not** return a promise, throws outside promises on next tick
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_done}
          * if resolve/reject is/are provided, a last Promise.then is executed with optional context
          *
@@ -336,7 +336,7 @@
         });
         /**
          * non-standard
-         * transforms Promise to node-like callback - meaning: callback(error, value)
+         * transforms Promise to node-like callback - meaning: `callback(error, value)`
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_nodify}
          *
          * @name PromiseX#nodeify
@@ -405,7 +405,8 @@
          * non-standard
          * cancelled promise chain can be catched here
          * resolve method gets reason as parameter
-         * influence continuing by return a value of throw; returning nothing means continue cancelling
+         * influence continuing by returning a value or throw
+         * return nothing (undefined) means continue cancelling
          *
          * @name PromiseX#cancelled
          * @example
@@ -450,6 +451,7 @@
         });
         /**
          * standard, returns a resolved Promise with given value
+         * _heads-up:_ if value is a `PromiseX`, value is returned
          *
          * @name PromiseX.resolve
          * @example
@@ -560,6 +562,7 @@
          * returns a deferred object including promise and
          * resolve and reject methods to fulfill the promise
          * {@link https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred}
+         * _attention:_ don't use deferred.promise; there is a `promise` property but only for internal use!
          *
          * @name PromiseX.defer
          * @example
@@ -581,8 +584,9 @@
             return new PromiseX();
         });
         /**
-         * ensures to return a promise
+         * ensures to return a `PromiseX` promise
          * if value is a promise, return that promise
+         * different to PromiseX.resolve since `cast` transforms and `resolve` gives a resolved `PromiseX`
          * {@link http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony}
          *
          * @name PromiseX.cast
@@ -665,7 +669,7 @@
          * following promises can be cancelled if any promise returns a cancel promise
          *
          * @name PromiseX.race
-         * @exmple
+         * @example
          * PromiseX.race([doAsync1(), doAsync2()]).then(function(value) {
          *     // value could be resolved value from doAsync1 or doAsync2 deciding on faster one
          * }).catch(function() {
@@ -802,7 +806,7 @@
         });
         /**
          * non-standard
-         * returns an array of PromiseX created from each value by the map function executed with optional context
+         * returns an array of `PromiseX` created from each value by the map function executed with optional context
          * mapFunction is called as mapper(current, index, length, values)
          * _heads-up:_ take care of errors; invalid input throws
          *
