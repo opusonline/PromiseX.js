@@ -51,9 +51,10 @@
          * if executor is a native promise the new object will be a wrapper for this promise
          * every other executor is treated as PromiseX.resolve(value)
          *
-         * @class
+         * @class PromiseX
          * @param {undefined|function|*} [executor]
          * @param {Object} [context] Context for executor
+         * @return {PromiseX} new PromiseX
          */
         function PromiseX(executor, context) {
             if (!_isPromiseX(this)) {
@@ -131,9 +132,25 @@
             this.value = executor;
         }
 
-        // public string constants for better readability
+        /**
+         * @name PromiseX.PENDING
+         * @constant {string} PENDING
+         */
         PromiseX.PENDING = 'pending';
+        /**
+         * @name PromiseX.RESOLVED
+         * @constant {string} RESOLVED
+         */
         PromiseX.RESOLVED = 'resolved';
+        /**
+         * @name PromiseX.REJECTED
+         * @constant {string} REJECTED
+         * @example
+         * var promise = Promise.resolve('foo');
+         * if (promise.status === PromiseX.RESOLVED) {
+         *     doStuff();
+         * }
+         */
         PromiseX.REJECTED = 'rejected';
 
         var proto = PromiseX.prototype;
@@ -147,7 +164,30 @@
          * reject function is executed if previous Promise is rejected
          * resolve/reject functions are called with optional context
          *
-         * @memberOf PromiseX#
+         * @name PromiseX#then
+         * @example
+         * // default use
+         * doAsync().then(function(value) {
+         *     console.log(value);
+         * });
+         *
+         * // resolve and reject
+         * doAsync().then(function(value) {
+         *     console.log(value);
+         * }, function(reason) {
+         *     console.error(reason);
+         * });
+         *
+         * // catch
+         * doAsync().then(null, function(reason) {
+         *     console.error(reason);
+         * });
+         *
+         * // context
+         * var collection = {};
+         * doAsync().then(function(value) {
+         *     this.result = value;
+         * }, null, collection);           // null is for reject function
          * @param {function} resolve
          * @param {function} [reject]
          * @param {Object} [context] Context for resolve/reject function
@@ -178,7 +218,18 @@
          * shorthand for Promise.then(null, reject)
          * reject function is called with optional context
          *
-         * @memberOf PromiseX#
+         * @name PromiseX#catch
+         * @example
+         * // default use
+         * doAsync().catch(function(reason) {
+         *     console.error(reason);
+         * });
+         *
+         * // context
+         * var collection = {};
+         * doAsync().catch(function(reason) {
+         *     this.result = reason;
+         * }, collection);
          * @param {function} reject
          * @param {Object} [context] Context for reject function
          * @return {PromiseX} new PromiseX
@@ -206,7 +257,32 @@
          * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block}
          * and is a bit different to others regarding the return value of finally callback
          *
-         * @memberOf PromiseX#
+         * @name PromiseX#finally
+         * @example
+         * // default use
+         * showLoadingSpinner();
+         * doAsync().finally(function() { // or just .finally(hideLoadingSpinner) but be sure that hideLoadingSpinner returns no value
+         *     hideLoadingSpinner();
+         *     // return;
+         * }).then(function(value) {
+         *     // result of doAsync is shown here
+         *     console.log(value);
+         * }).catch(function(reason) {
+         *     // errors in doAsync will be catched here
+         *     console.error(reason);
+         * });
+         *
+         * PromiseX.reject('error').finally(function() {
+         *     throw 'finally error';
+         * }).catch(function(reason) {
+         *     // reason == 'finally error';
+         * });
+         *
+         * PromiseX.resolve('foo').finally(function() {
+         *     return 'bar';
+         * }).then(function(reason) {
+         *     // reason == 'bar';
+         * });
          * @param {function} callback
          * @param {Object} [context] Context for callback
          * @return {PromiseX} new PromiseX
@@ -238,7 +314,13 @@
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_done}
          * if resolve/reject is/are provided, a last Promise.then is executed with optional context
          *
-         * @memberOf PromiseX#
+         * @name PromiseX#done
+         * @example
+         * // default use
+         * doAsync().then(doStuff).done();
+         *
+         * // then().done() in one
+         * doAsync().done(doStuff);
          * @param {function} [resolve]
          * @param {function} [reject]
          * @param {Object} [context] Context for resolve/reject function
@@ -257,7 +339,15 @@
          * transforms Promise to node-like callback - meaning: callback(error, value)
          * defined here: {@link https://www.promisejs.org/api/#Promise_prototype_nodify}
          *
-         * @memberOf PromiseX#
+         * @name PromiseX#nodeify
+         * @example
+         * doAsync().nodeify(function (error, result) {
+         *     if (error) {
+         *         console.error(error);
+         *         return;
+         *     }
+         *     doStuff(result);
+         * });
          * @param {function} callback
          * @param {Object} [context] Context for callback
          * @return {PromiseX} self
@@ -283,7 +373,15 @@
          * delays execution of next Promise in chain
          * previous value or error is propagated
          *
-         * @memberOf PromiseX#
+         * @name PromiseX#delay
+         * @example
+         * doAsync().delay(5000).then(function(value) {
+         *     // 5s after doAsync resolves
+         *     // value is result of doAsync
+         * }, function(reason) {
+         *     // 5s after doAsync rejects
+         *     // reason is error of doAsync
+         * });
          * @param {Number} ms Milliseconds
          * @return {PromiseX} new PromiseX
          */
@@ -309,7 +407,27 @@
          * resolve method gets reason as parameter
          * influence continuing by return a value of throw; returning nothing means continue cancelling
          *
-         * @memberOf PromiseX#
+         * @name PromiseX#cancelled
+         * @example
+         * getJSON('data').catch(function(reason) {
+         *     return PromiseX.cancel({message: 'Load Error', error: reason});
+         * }).then(function(data) {
+         *     // success loading
+         *     // process data
+         *     // never called if cancelled before
+         *     return processData(data);
+         * }).then(function(foo) {
+         *     // only called if not cancelled
+         *     duStuff(foo);
+         * }).catch(function(reason) {
+         *     // even catch is never called if cancelled before!!!
+         * }).cancelled(function(error) {
+         *     console.warn(error.message, error.error);
+         *     return 'from cancelled with <3'; // optional
+         * }).then(function(message) {
+         *     // continues here
+         *     // message from cancelled handler (optional)
+         * });
          * @param {function} resolve
          * @param {Object} [context]
          * @return {PromiseX} new PromiseX
@@ -333,8 +451,9 @@
         /**
          * standard, returns a resolved Promise with given value
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.resolve
+         * @example
+         * PromiseX.resolve('done');
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
          */
@@ -349,8 +468,9 @@
         /**
          * standard, returns a rejected Promise with given reason
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.reject
+         * @example
+         * PromiseX.reject('fail');
          * @param {*} [reason]
          * @return {PromiseX} new PromiseX
          */
@@ -368,8 +488,26 @@
          * _heads-up:_ I refused doAsync().timeout() because I want to avoid using timeout later in promise chain
          * since setTimeout starts immediately when calling and not when promise starts
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.timeout
+         * @example
+         * PromiseX.timeout(doAsync(), 5000).then(function (value) {
+         *     // result of doAsync in under 5000ms
+         * }, function(reason) {
+         *     // error from doAsync in under 5000ms
+         *     // or reason.message == Timeout otherwise since Error('Timeout') is thrown
+         * });
+         *
+         * PromiseX.timeout(doAsync(), 5000, 'doAsyncTimeout').catch(function(reason) {
+         *     // error from doAsync in under 5000ms
+         *     // or reason.message == 'doAsyncTimeout'
+         * });
+         *
+         * // good practice
+         * doAsync().then(function() {
+         *     return PromiseX.timeout(somePromise(), 5000); // timeout starts counting when then is executed
+         * }).catch(function(reason) {
+         *     // reason.message == 'Timeout'
+         * });
          * @param {Promise} promise
          * @param {Number} ms Milliseconds
          * @param {String} [reason]
@@ -387,8 +525,25 @@
          * non-standard
          * returns a resolved Promise with given value after certain amount of time
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.delay
+         * @example
+         * PromiseX.delay(5000, 'foo').then(function(value) {
+         *     // 5 seconds later
+         *     // value == 'foo'
+         * });
+         *
+         * // fancy Promise timeout
+         * PromiseX.race([doAsync(), PromiseX.delay(100).then(function(){
+         *     throw new Error('timeout');
+         * })]).catch(function(reason) {
+         *     // reason == doAsync error or timeout
+         * });
+         *
+         * doAsync().then(function(value) {
+         *     return PromiseX.delay(5000, value);
+         * }).then(function(value) {
+         *     // value == doAsync value; 5 seconds after doAsync resolved
+         * });
          * @param {Number} ms Milliseconds
          * @param {*} [value]
          * @return {PromiseX} new PromiseX
@@ -406,8 +561,20 @@
          * resolve and reject methods to fulfill the promise
          * {@link https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred}
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.defer
+         * @example
+         * function doAsync() {
+         *     var deferred = PromiseX.defer(); // could also be: deferred = new Promise();
+         *     setTimeout(function() {
+         *         if (test) {
+         *             deferred.resolve();
+         *         } else {
+         *             deferred.reject();
+         *         }
+         *     }, 5000);
+         *     return deferred;
+         * }
+         * doAsync().then(…)
          * @return {PromiseX} deferred
          */
         _defineProperty(PromiseX, 'defer', function PromiseX_defer() {
@@ -418,8 +585,18 @@
          * if value is a promise, return that promise
          * {@link http://www.wintellect.com/devcenter/nstieglitz/5-great-features-in-es6-harmony}
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.cast
+         * @example
+         * // any value
+         * PromiseX.cast('foo').then(…);
+         *
+         * // promise
+         * var promise = Promise.resolve();
+         * PromiseX.cast(promise).then(…);
+         *
+         * // PromiseX
+         * var promise = new PromiseX();
+         * PromiseX.cast(promise).then(…); // PromiseX.cast(promise) === promise
          * @param {*} value
          * @return {PromiseX} new PromiseX
          */
@@ -439,8 +616,18 @@
          * resolve function gets array of promise values
          * following promises can be cancelled if any promise returns a cancel promise
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.all
+         * @example
+         * PromiseX.all([doAsync1(), doAsync2()]).then(function(resolveArray) {
+         *     var value1 = resolveArray[0];
+         *     var value2 = resolveArray[1];
+         * }).catch(function(reason) {
+         *     // could be any error from doAsync1 or doAsync2
+         * });
+         *
+         * // fancy usecase
+         * var requests = PromiseX.map(['content1.json', 'content2.json'], getJSON); // same as [getJSON('content1.json'), getJSON('content2.json')]
+         * PromiseX.all(requests).then(…).catch(…);
          * @param {Array<Promise>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -477,8 +664,20 @@
          * or rejected as soon as one promise of list is rejected
          * following promises can be cancelled if any promise returns a cancel promise
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.race
+         * @exmple
+         * PromiseX.race([doAsync1(), doAsync2()]).then(function(value) {
+         *     // value could be resolved value from doAsync1 or doAsync2 deciding on faster one
+         * }).catch(function() {
+         *     // could be any error from doAsync1 or doAsync2
+         * });
+         *
+         * // nice for timeout
+         * PromiseX.race([doAsync(), PromiseX.delay(100).then(function(){
+         *     throw new Error('timeout');
+         * })]).catch(function(reason) {
+         *     // reason == doAsync error or timeout
+         * });
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -507,8 +706,20 @@
          * as promise.value and promise.status
          * following promises can be cancelled if any promise returns a cancel promise
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.every
+         * @example
+         * var requests = PromiseX.map(['c1.json', c2.json], getJSON); // could also be [getJSON('c1.json'), getJSON('c1.json')]
+         * PromiseX.every(requests).then(function(resultArray) {
+         *     resultArray.forEach(function(result) {
+         *         if (result.status === PromiseX.RESOLVED) {
+         *             console.log(result.value);
+         *         } else {
+         *             console.error(result.value);
+         *         }
+         *     });
+         * }).catch(function(reason) {
+         *     // reason could be any error during performing PromiseX.every, NOT a rejected request
+         * });
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -549,8 +760,17 @@
          * is fulfilled as soon as any promise is resolved or all promises are rejected
          * following promises can be cancelled if any promise returns a cancel promise
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.any
+         * @example
+         * var requests = ['endpoint1', 'endpoint2'].map(function(endpoint) { // could also be [getJSON('endpoint1/a.json'), getJSON('endpoint2/a.json')];
+         *     return getJSON(endpoint + '/a.json');
+         * });
+         * PromiseX.any(requests).then(function(response) {
+         *     // response is from fastest endpoint, yeah :D
+         * }).catch(function(reason) {
+         *     // none of endpoints resolved
+         *     // reason.message == 'No promises resolved successfully.'
+         * });
          * @param {Array<Promise|*>} promises
          * @return {PromiseX} new PromiseX
          */
@@ -586,8 +806,30 @@
          * mapFunction is called as mapper(current, index, length, values)
          * _heads-up:_ take care of errors; invalid input throws
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.map
+         * @example
+         * var requestConfig = {
+         *     credentials: 'include'
+         * };
+         *
+         * var requests = PromiseX.map(['c1.json', c2.json], function(file) {
+         *     var request = new Request('endpoint/' + file, requestConfig);
+         *     return fetch(request).then(function(response) {             // see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+         *         if (response.ok === false) {
+         *             throw new TypeError('Invalid response');
+         *         }
+         *         return response.json();
+         *     });
+         * });
+         *
+         * // use of PromiseX promises
+         * requests.forEach(function(promise) {
+         *     // promise is automatically casted to PromiseX within PromiseX.map
+         *     promise.nodeify(callback);
+         * });
+         *
+         * // usecase
+         * PromiseX.every(requests).then(…).catch(…);
          * @param {Array<*>} values Array of values
          * @param {function} mapFunction Called as mapper(current, index, length, values)
          * @param {Object} [context] Context for mapFunction
@@ -615,8 +857,39 @@
          * used in used in many Promise libraries like [BluebirdJS]{@link http://bluebirdjs.com/docs/api/timeout.html}
          * or slightly different here [promise-reduce]{@link https://github.com/yoshuawuyts/promise-reduce}
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.reduce
+         * @example
+         * // simple usecase
+         * PromiseX.reduce(['entries-10.txt', 'entries-20.txt'], function(result, file) {
+         *     return readEntriesAsync(file).then(function(entries) {
+         *         // entries of entries-10 is 10 and so on
+         *         return entries + result;            // first result = 0 (initValue)
+         *     });
+         * }, 0).then(function(total) {
+         *     // total == 0 + 10 + 20 = 30
+         * });
+         * // even simpler
+         * PromiseX.reduce([1, 2, 3], function(total, current) {
+         *     return total + current;
+         * }, 0).then(function(total) {
+         *     // total == 6
+         * });
+         *
+         * // example adapted from http://www.html5rocks.com/en/tutorials/es6/promises/#toc-creating-sequences
+         * var urls = ['chapter-1.json', 'chapter-2.json', …];
+         * var requests = PromiseX.map(urls, getJSON);         // start loading each immediately
+         * PromiseX.reduce(requests, function(_, chapterPromise) {
+         *     return chapterPromise.then(function(chapter) {
+         *         addHTMLToPage(chapter.htmlContent);         // add in correct order as soon as loaded
+         *     });
+         * }).then(function() {
+         *     addTextToPage("All done");
+         * }).catch(function(err) {
+         *     // catch any error that happened along the way
+         *     addTextToPage("Argh, broken: " + err.message);
+         * }).finally(function() {
+         *     document.querySelector('.spinner').style.display = 'none';
+         * });
          * @param {Array<*|Promise>} values Array of promises or values
          * @param {function} reduceFunction Called as reducer(previous, current, index, length, values) previous is initialValue or undefined
          * @param {*} [initialValue]
@@ -647,8 +920,19 @@
          * returning PromiseX.cancel(reason) will cancel the whole following promise chain
          * cancel can be caught on PromiseX#cancelled(reason) method within a chain
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.cancel
+         * @example
+         * getJSON('/data').catch(function(error) {
+         *     return PromiseX.cancel({message: 'AJAX error', error: error});
+         * }).then(function() {
+         *     // this function is never invoked on cancel
+         * }).then(function() {
+         *     // this function is never invoked on cancel
+         * }).catch(function() {
+         *     // this function is never invoked on cancel
+         * }).cancelled(function(reason) {
+         *     console.warn('cancelled', reason.message, reason.error);
+         * });
          * @param {*} reason Can be anything, even objects
          * @return {PromiseX} new PromiseX with special Cancel value
          */
@@ -662,8 +946,12 @@
          * 'getPromise' and 'setPromise' G/Setter for the underlying promise - that way you don't need to redefine global promise
          * 'createPromise' creates a new separate PromiseX instance with a given underlying promise
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.config
+         * @example
+         * var Bluebird = Promise.noConflict();     // if Bluebird is included
+         * PromiseX.config('setPromise', Bluebird);
+         * var PromiseZ = PromiseX.config('createPromise', Zousan);
+         * assert(PromiseZ.config('getPromise') instanceof Zousan);
          * @param {String} option
          * @param {*} [value]
          * @return {boolean|*} Success state or requested config option
@@ -689,14 +977,25 @@
             }
             return false;
         });
-        /**
          /**
          * static error on PromiseX
          * can be used to throw special error and check with 'instanceof'
          * provides message and even error like stack
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.CancellationError
+         * @example
+         * getJSON('/data.json').then(function(data) {
+         *     if (data.length === 0) {
+         *         throw PromiseX.CancellationError('data.json is empty');
+         *     }
+         *     return doStuff(data);
+         * }).then(…).catch(function(reason) {
+         *     if (reason instanceof PromiseX.CancellationError) {
+         *         console.error(reason);
+         *     } else {
+         *         // here for example getJSON errors are caught
+         *     }
+         * });
          * @param {String} message
          * @return {PromiseX.CancellationError}
          */
@@ -712,8 +1011,21 @@
          * can be used to throw special error and check with 'instanceof'
          * provides message and even error like stack
          *
-         * @memberOf PromiseX
-         * @static
+         * @name PromiseX.TimeoutError
+         * @example
+         * function loadWithTimeout(url, delay) {
+         *     return new PromiseX(function(resolve, reject) {
+         *         setTimeout(function() {
+         *             throw new PromiseX.TimeoutError('loadWithTimeout from ' + url);
+         *         }, delay);
+         *         getJSON(url).then(resolve, reject);
+         *     });
+         * }
+         * loadWithTimeout('/data', 5000).catch(function(reason) {
+         *     if (reason instanceof PromiseX.TimeoutError) {
+         *         console.warn('timeout', reason.message);
+         *     }
+         * });
          * @param {String} message Everything casted to string
          * @return {PromiseX.TimeoutError}
          */
