@@ -118,7 +118,8 @@ if (promise.status === PromiseX.RESOLVED) {
 just like standard Promise.then, always returns a new Promise  
 resolve function is executed if previous Promise is resolved  
 reject function is executed if previous Promise is rejected  
-resolve/reject functions are called with optional context
+resolve/reject functions are called with optional context  
+skipped if previous promise is cancelled
 
 ```javascript
 // default use
@@ -150,7 +151,8 @@ doAsync().then(function(value) {
 just like standard Promise.catch, always returns a new Promise  
 reject function is executed if previous Promise is rejected  
 shorthand for Promise.then(null, reject)  
-reject function is called with optional context
+reject function is called with optional context  
+skipped if previous promise is cancelled
 
 ```javascript
 // default use
@@ -171,9 +173,10 @@ non-standard, always returns a new Promise
 defined here: <https://www.promisejs.org/api/#Promise_prototype_finally>  
 callback is executed with optional context when Promise is fulfilled  
 previous resolved/rejected values are propagated to next Promise  
-__attention:___ this behaves exactly like try-catch-finally  
+_attention:_ this behaves exactly like try-catch-finally  
 <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling#The_finally_block>  
-and is a bit different to others regarding the return value of finally callback
+and is a bit different to others regarding the return value of finally callback  
+skipped if previous promise is cancelled
 
 ```javascript
 // default use
@@ -207,7 +210,8 @@ PromiseX.resolve('foo').finally(function() {
 non-standard  
 does **not** return a promise, throws outside promises on next tick  
 defined here: <https://www.promisejs.org/api/#Promise_prototype_done>  
-if resolve/reject is/are provided, a last Promise.then is executed with optional context
+if resolve/reject is/are provided, a last Promise.then is executed with optional context  
+skipped if previous promise is cancelled
 
 ```javascript
 // default use
@@ -221,7 +225,8 @@ doAsync().done(doStuff);
 
 non-standard  
 transforms Promise to node-like callback - meaning: `callback(error, value)`  
-defined here: <https://www.promisejs.org/api/#Promise_prototype_nodify>
+defined here: <https://www.promisejs.org/api/#Promise_prototype_nodify>  
+skipped if previous promise is cancelled
 
 ```javascript
 doAsync().nodeify(function (error, result) {
@@ -238,7 +243,8 @@ doAsync().nodeify(function (error, result) {
 non-standard  
 used in many Promise libraries like [BluebirdJS](http://bluebirdjs.com/docs/api/promise.delay.html)  
 delays execution of next Promise in chain  
-previous value or error is propagated
+previous value or error is propagated  
+skipped if previous promise is cancelled
 
 ```javascript
 doAsync().delay(5000).then(function(value) {
