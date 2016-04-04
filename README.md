@@ -8,6 +8,9 @@ PromiseX.js
 
 Javascript Promise Xtended - Wrapper to add new methods [w/o changing the native promise prototype](https://www.nczonline.net/blog/2010/03/02/maintainable-javascript-dont-modify-objects-you-down-own/)
 
+[![npm][https://img.shields.io/npm/v/opusonline-promisex.js.svg?style=flat]][https://npmjs.org/package/opusonline-promisex.js]
+[![downloads][https://img.shields.io/npm/dm/opusonline-promisex.js.svg?style=flat]][https://npmjs.org/package/opusonline-promisex.js]
+
 # Features
 
  * built-in `defer` if needed
@@ -45,6 +48,10 @@ For example [Point 2.2.5](https://promisesaplus.com/#point-35) is true in genera
 
  * Install with [Bower](http://bower.io): `bower install opusonline-promisex.js`
  * Install with [NPM](https://www.npmjs.org/): `npm install opusonline-promisex.js`
+
+# Support me
+
+You can support me and Donate Bitcoin[![Donate Bitcoin: 1ERZVwAmd4bM3DWjtxionJE8m24wpCa5nV](http://i.imgur.com/2bwJFmr.png)](bitcoin:1ERZVwAmd4bM3DWjtxionJE8m24wpCa5nV) - Thanks!
 
 # Usage
 
