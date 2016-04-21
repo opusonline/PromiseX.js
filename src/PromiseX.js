@@ -5,7 +5,7 @@
  * also interesting: https://github.com/paldepind/sync-promise
  * http://exploringjs.com/es6/ch_promises.html
  * @author Stefan Benicke <stefan.benicke@gmail.com>
- * @version 2.1.0
+ * @version 2.2.0
  * @see {@link https://github.com/opusonline/PromiseX.js}
  * @license MIT
  */
@@ -1039,6 +1039,7 @@
                     throw new TypeError(' Invalid Promise: ' + value);
                 }
                 _Promise = value;
+                _validBasePromise = _supportsPromise();
                 return true;
             }
             if (option === 'createPromise' && value !== undefined) {
