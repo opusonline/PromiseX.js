@@ -1,6 +1,6 @@
 {
   "name": "opusonline-promisex.js",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "author": "Stefan Benicke <stefan.benicke@gmail.com>",
   "description": "Javascript Promise Xtended - Wrapper to add new methods w/o changing the native promise prototype",
   "main": "PromiseX.min.js",
