@@ -8,8 +8,11 @@ PromiseX.js
 
 Javascript Promise Xtended - Wrapper to add new methods [w/o changing the native promise prototype](https://www.nczonline.net/blog/2010/03/02/maintainable-javascript-dont-modify-objects-you-down-own/)
 
+[![release](https://img.shields.io/github/release/opusonline/PromiseX.js.svg?style=flat)](https://github.com/opusonline/PromiseX.js/releases/latest)
+[![license](https://img.shields.io/github/license/opusonline/PromiseX.js.svg?style=flat)](https://raw.githubusercontent.com/opusonline/PromiseX.js/master/LICENSE.md)
+[![bower](https://img.shields.io/bower/v/opusonline-promisex.js.svg?style=flat)](http://bower.io/search/?q=opusonline-promisex.js)
 [![npm](https://img.shields.io/npm/v/opusonline-promisex.js.svg?style=flat)](https://npmjs.org/package/opusonline-promisex.js)
-[![downloads](https://img.shields.io/npm/dm/opusonline-promisex.js.svg?style=flat)](https://npmjs.org/package/opusonline-promisex.js)
+[![npm downloads](https://img.shields.io/npm/dm/opusonline-promisex.js.svg?style=flat)](https://npmjs.org/package/opusonline-promisex.js)
 
 # Features
 
