@@ -1,4 +1,4 @@
-<a href="http://promises-aplus.github.com/promises-spec">
+<a href="https://promisesaplus.com/">
     <img src="http://promises-aplus.github.com/promises-spec/assets/logo-small.png"
          align="right" alt="Promises/A+ logo" />
 </a>
@@ -49,8 +49,8 @@ For example [Point 2.2.5](https://promisesaplus.com/#point-35) is true in genera
 
 # Install
 
- * Install with [Bower](http://bower.io): `bower install opusonline-promisex.js`
- * Install with [NPM](https://www.npmjs.org/): `npm install opusonline-promisex.js`
+ * Install with [yarn](https://yarnpkg.com/): `yarn add opusonline-promisex.js`
+ * Install with [npm](https://www.npmjs.org/): `npm install opusonline-promisex.js`
 
 # Support me
 
